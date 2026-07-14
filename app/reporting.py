@@ -1,0 +1,126 @@
+from __future__ import annotations
+
+from datetime import datetime
+from typing import Any
+
+from app.config import Settings, get_settings
+from app.excel_io import load_tariff_dataframe, write_tariff_dataframe
+from app.pipeline import load_proposals_state, read_json, write_json
+from app.review_store import load_review_decisions
+from app.schemas import ProposedUpdate, ReviewDecision
+from app.tools import apply_updates_to_dataframe
+
+
+def apply_approved_updates(settings: Settings | None = None) -> dict[str, Any]:
+    settings = settings or get_settings()
+    proposals = load_proposals_state(settings)
+    decisions = load_review_decisions(settings)
+    approved = _approved_proposals(proposals, decisions)
+
+    source_df = load_tariff_dataframe(settings.input_excel_path)
+    updated_df = apply_updates_to_dataframe(source_df, approved)
+    output_path = write_tariff_dataframe(updated_df, settings.updated_excel_path)
+    audit_log = build_audit_log(proposals, decisions)
+    write_json(settings.audit_log_path, audit_log)
+    report_path = generate_markdown_report(proposals, decisions, settings)
+    return {
+        "applied_updates": len(approved),
+        "output_excel": str(output_path),
+        "audit_log": str(settings.audit_log_path),
+        "report": str(report_path),
+    }
+
+
+def build_audit_log(
+    proposals: list[ProposedUpdate],
+    decisions: list[ReviewDecision],
+) -> list[dict[str, Any]]:
+    proposal_lookup = {(item.pack_id, item.field_name): item for item in proposals}
+    rows: list[dict[str, Any]] = []
+    for decision in decisions:
+        proposal = proposal_lookup.get((decision.pack_id, decision.field_name))
+        rows.append(
+            {
+                "timestamp": decision.decided_at.isoformat(),
+                "pack_id": decision.pack_id,
+                "field_name": decision.field_name,
+                "old_value": proposal.old_value if proposal else None,
+                "proposed_value": proposal.proposed_value if proposal else None,
+                "decision": decision.decision,
+                "reviewer": decision.reviewer,
+                "review_reasoning": decision.reasoning,
+                "confidence_score": proposal.confidence_score if proposal else None,
+                "risk_level": proposal.risk_level if proposal else None,
+                "evidence_sources": proposal.evidence_sources if proposal else [],
+                "agent_reasoning": proposal.reasoning_summary if proposal else "",
+            }
+        )
+    return rows
+
+
+def generate_markdown_report(
+    proposals: list[ProposedUpdate] | None = None,
+    decisions: list[ReviewDecision] | None = None,
+    settings: Settings | None = None,
+) -> str:
+    settings = settings or get_settings()
+    proposals = proposals if proposals is not None else load_proposals_state(settings)
+    decisions = decisions if decisions is not None else load_review_decisions(settings)
+    audit_log = build_audit_log(proposals, decisions)
+    if not settings.audit_log_path.exists():
+        write_json(settings.audit_log_path, audit_log)
+
+    approved_count = sum(1 for row in audit_log if row["decision"] == "approved")
+    rejected_count = sum(1 for row in audit_log if row["decision"] == "rejected")
+    lines = [
+        "# Tariff Review Report",
+        "",
+        f"Generated at: {datetime.utcnow().isoformat()} UTC",
+        "",
+        "## Summary",
+        "",
+        f"- Proposals generated: {len(proposals)}",
+        f"- Decisions captured: {len(decisions)}",
+        f"- Approved updates applied: {approved_count}",
+        f"- Rejected updates retained in audit only: {rejected_count}",
+        "",
+        "## Decisions",
+        "",
+        "| Pack ID | Field | Old Value | Proposed Value | Decision | Risk | Confidence |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in audit_log:
+        lines.append(
+            "| {pack_id} | {field_name} | {old_value} | {proposed_value} | {decision} | "
+            "{risk_level} | {confidence_score} |".format(**row)
+        )
+    lines.extend(
+        [
+            "",
+            "## Controls",
+            "",
+            "- Source Excel file is never mutated.",
+            "- Only approved proposal fields are written to the output workbook.",
+            "- Rejected proposals remain visible in the audit log for traceability.",
+            "- Every row links the decision back to evidence sources and agent reasoning in `audit_log.json`.",
+        ]
+    )
+    settings.report_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return str(settings.report_path)
+
+
+def load_audit_log(settings: Settings | None = None) -> list[dict[str, Any]]:
+    settings = settings or get_settings()
+    return read_json(settings.audit_log_path, [])
+
+
+def _approved_proposals(
+    proposals: list[ProposedUpdate],
+    decisions: list[ReviewDecision],
+) -> list[ProposedUpdate]:
+    approved_keys = {
+        (decision.pack_id, decision.field_name)
+        for decision in decisions
+        if decision.decision == "approved"
+    }
+    return [item for item in proposals if (item.pack_id, item.field_name) in approved_keys]

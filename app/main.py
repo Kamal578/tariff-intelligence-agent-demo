@@ -5,6 +5,7 @@ from fastapi.responses import FileResponse, PlainTextResponse
 
 from app.config import get_settings
 from app.pipeline import ingest_knowledge, load_proposals_state, load_records_state, process_tariffs
+from app.reporting import apply_approved_updates, generate_markdown_report
 from app.review_store import load_review_decisions, save_review_decision
 from app.schemas import ReviewDecision
 
@@ -56,13 +57,18 @@ def review(decision: ReviewDecision) -> dict[str, object]:
 
 
 @app.post("/apply-approved")
-def apply_approved() -> dict[str, str]:
-    raise HTTPException(status_code=501, detail="Approval application is added in the reporting milestone.")
+def apply_approved() -> dict[str, object]:
+    try:
+        return apply_approved_updates(get_settings())
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @app.get("/report", response_model=None)
 def report() -> FileResponse | PlainTextResponse:
     settings = get_settings()
+    if not settings.report_path.exists():
+        generate_markdown_report(settings=settings)
     if settings.report_path.exists():
         return FileResponse(settings.report_path, media_type="text/markdown")
     return PlainTextResponse("Report has not been generated yet.", status_code=404)
