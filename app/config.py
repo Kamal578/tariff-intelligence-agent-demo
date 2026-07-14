@@ -12,7 +12,7 @@ load_dotenv()
 class Settings(BaseSettings):
     """Runtime settings for local demo paths and optional Gemini access."""
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore", populate_by_name=True)
 
     app_env: str = Field(default="local", alias="APP_ENV")
     gemini_api_key: str | None = Field(default=None, alias="GEMINI_API_KEY")

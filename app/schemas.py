@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
@@ -79,7 +79,7 @@ class ReviewDecision(BaseModel):
     decision: DecisionValue
     reviewer: str = "demo_analyst"
     reasoning: str = ""
-    decided_at: datetime = Field(default_factory=datetime.utcnow)
+    decided_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class ProcessingResult(BaseModel):
@@ -87,4 +87,4 @@ class ProcessingResult(BaseModel):
     issues: list[MissingFieldIssue]
     proposals: list[ProposedUpdate]
     mode: Literal["gemini", "fallback", "mixed"] = "fallback"
-    generated_at: datetime = Field(default_factory=datetime.utcnow)
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from app.config import Settings, get_settings
@@ -75,7 +75,7 @@ def generate_markdown_report(
     lines = [
         "# Tariff Review Report",
         "",
-        f"Generated at: {datetime.utcnow().isoformat()} UTC",
+        f"Generated at: {datetime.now(UTC).isoformat()}",
         "",
         "## Summary",
         "",
