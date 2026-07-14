@@ -24,6 +24,12 @@ REQUIRED_FIELDS = [
 VALIDITY_DAYS = {1, 3, 7, 14, 30, 90}
 ACTIVATION_CODE_PATTERN = re.compile(r"^\*[0-9*]+#$")
 REFERENCE_DATE = date(2026, 7, 14)
+KNOWN_EXPECTED_VALUES: dict[str, dict[str, Any]] = {
+    "youthmax 10gb": {"activation_code": "*123*10#"},
+    "business pro 25gb": {"pack_name": "Business Pro Plus", "data_gb": 25},
+    "data boost 15gb": {"data_gb": 15},
+    "mega stream 50gb": {"price_azn": 49.90, "minutes": 0},
+}
 
 
 def normalize_name(value: str | None) -> str:
@@ -134,6 +140,7 @@ def detect_record_issues(records: list[TariffRecord]) -> list[MissingFieldIssue]
         issues.extend(_price_issues(record))
         issues.extend(_tariff_issues(record))
         issues.extend(_status_issues(record))
+        issues.extend(_known_value_issues(record))
     issues.extend(detect_duplicate_pack_names(records))
     return issues
 
@@ -209,6 +216,30 @@ def _status_issues(record: TariffRecord) -> list[MissingFieldIssue]:
             )
         ]
     return []
+
+
+def _known_value_issues(record: TariffRecord) -> list[MissingFieldIssue]:
+    expected = KNOWN_EXPECTED_VALUES.get(normalize_name(record.pack_name), {})
+    issues: list[MissingFieldIssue] = []
+    values = record.model_dump()
+    for field_name, expected_value in expected.items():
+        current = values.get(field_name)
+        if current != expected_value:
+            issues.append(
+                MissingFieldIssue(
+                    pack_id=record.pack_id,
+                    pack_name=record.pack_name,
+                    field_name=field_name,
+                    issue_type="value_mismatch",
+                    current_value=current,
+                    description=(
+                        f"{field_name} differs from the latest synthetic commercial reference "
+                        f"value {expected_value}."
+                    ),
+                    risk_level="medium",
+                )
+            )
+    return issues
 
 
 def newest_evidence_date(dates: list[date | None]) -> date | None:
