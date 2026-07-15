@@ -14,8 +14,12 @@ const metricConfig = [
 export function MetricsCards({ metrics }: { metrics: Metrics }) {
   return (
     <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
-      {metricConfig.map(([key, label, Icon]) => (
-        <div key={key} className="rounded-lg border border-line bg-white p-4 shadow-soft">
+      {metricConfig.map(([key, label, Icon], index) => (
+        <div
+          key={key}
+          className="motion-card rounded-lg border border-line bg-white p-4 shadow-soft"
+          style={{ animationDelay: `${index * 45}ms` }}
+        >
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium uppercase text-slate-500">{label}</span>
             <Icon className="h-4 w-4 text-slate-400" />

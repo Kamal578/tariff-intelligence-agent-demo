@@ -219,7 +219,7 @@ export default function App() {
           >
             <RotateCcw className="h-4 w-4" /> Reset Demo
           </button>
-          {message && <span className="rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-700">{message}</span>}
+          {message && <span className="status-toast rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-700">{message}</span>}
         </div>
         {analysisRunning && (
           <div className="rounded-lg border border-blue-100 bg-white p-3 shadow-soft">
@@ -234,50 +234,52 @@ export default function App() {
         )}
         <WorkflowStepper activeIndex={analysisRunning ? 4 : proposals.length ? 4 : records.length ? 2 : 0} running={analysisRunning} />
 
-        {activeView === "dashboard" && (
-          <div className="space-y-5">
-            <MetricsCards metrics={metrics} />
-            <RunHistory jobs={jobs.slice(0, 5)} activeJobId={activeJobId} />
-          </div>
-        )}
-
-        {activeView === "runs" && <RunHistory jobs={jobs} activeJobId={activeJobId} />}
-
-        {activeView === "review" && (
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <section key={activeView} className="page-transition">
+          {activeView === "dashboard" && (
             <div className="space-y-5">
-              <RecordsTable records={records} proposals={proposals} />
-              <ProposalsBoard proposals={proposals} selectedId={selectedProposal?.proposal_id} onSelect={(proposal) => setSelectedId(proposal.proposal_id)} />
-              <SourceSearch onOpenSource={openSource} />
+              <MetricsCards metrics={metrics} />
+              <RunHistory jobs={jobs.slice(0, 5)} activeJobId={activeJobId} />
             </div>
-            <ProposalDetailPanel
-              proposal={selectedProposal}
-              busy={busy}
-              onApprove={(proposal, reasoning) => review(proposal, "approved", reasoning)}
-              onReject={(proposal, reasoning) => review(proposal, "rejected", reasoning)}
-              onOpenSource={openSource}
+          )}
+
+          {activeView === "runs" && <RunHistory jobs={jobs} activeJobId={activeJobId} />}
+
+          {activeView === "review" && (
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+              <div className="space-y-5">
+                <RecordsTable records={records} proposals={proposals} />
+                <ProposalsBoard proposals={proposals} selectedId={selectedProposal?.proposal_id} onSelect={(proposal) => setSelectedId(proposal.proposal_id)} />
+                <SourceSearch onOpenSource={openSource} />
+              </div>
+              <ProposalDetailPanel
+                proposal={selectedProposal}
+                busy={busy}
+                onApprove={(proposal, reasoning) => review(proposal, "approved", reasoning)}
+                onReject={(proposal, reasoning) => review(proposal, "rejected", reasoning)}
+                onOpenSource={openSource}
+              />
+            </div>
+          )}
+
+          {activeView === "sources" && (
+            <SourcesOfTruth
+              sources={sources}
+              selectedSourceId={selectedSourceId}
+              onSelectSource={setSelectedSourceId}
             />
-          </div>
-        )}
+          )}
 
-        {activeView === "sources" && (
-          <SourcesOfTruth
-            sources={sources}
-            selectedSourceId={selectedSourceId}
-            onSelectSource={setSelectedSourceId}
-          />
-        )}
+          {activeView === "audit" && (
+            <div className="space-y-5">
+              <DownloadsPanel busy={busy} onApply={applyApproved} />
+              <AuditLog entries={auditEntries} />
+            </div>
+          )}
 
-        {activeView === "audit" && (
-          <div className="space-y-5">
-            <DownloadsPanel busy={busy} onApply={applyApproved} />
-            <AuditLog entries={auditEntries} />
-          </div>
-        )}
-
-        {activeView === "settings" && (
-          <SettingsPanel config={config} analysisMode={analysisMode} onModeChange={setAnalysisMode} />
-        )}
+          {activeView === "settings" && (
+            <SettingsPanel config={config} analysisMode={analysisMode} onModeChange={setAnalysisMode} />
+          )}
+        </section>
         </main>
       </div>
     </div>

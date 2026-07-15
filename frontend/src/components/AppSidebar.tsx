@@ -21,8 +21,8 @@ export function AppSidebar({ activeView, onChange }: { activeView: AppView; onCh
             key={item.view}
             type="button"
             onClick={() => onChange(item.view)}
-            className={`inline-flex min-w-fit items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold lg:w-full ${
-              activeView === item.view ? "bg-ink text-white" : "text-slate-600 hover:bg-slate-100"
+            className={`nav-item-motion inline-flex min-w-fit items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold lg:w-full ${
+              activeView === item.view ? "nav-item-active bg-ink text-white" : "text-slate-600 hover:bg-slate-100"
             }`}
           >
             {item.icon}

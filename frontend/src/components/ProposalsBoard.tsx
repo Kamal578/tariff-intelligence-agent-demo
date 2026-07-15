@@ -86,13 +86,14 @@ export function ProposalsBoard({
               </tr>
             </thead>
             <tbody>
-              {filtered.map((proposal) => (
+              {filtered.map((proposal, index) => (
                 <tr
                   key={proposal.proposal_id}
                   onClick={() => onSelect(proposal)}
-                  className={`cursor-pointer border-t border-slate-100 hover:bg-blue-50 ${
+                  className={`motion-row cursor-pointer border-t border-slate-100 hover:bg-blue-50 ${
                     selectedId === proposal.proposal_id ? "bg-blue-50" : ""
                   }`}
+                  style={{ animationDelay: `${Math.min(index, 12) * 28}ms` }}
                 >
                   <td className="px-3 py-2 font-medium">{proposal.pack_name}</td>
                   <td className="px-3 py-2">{proposal.field_name}</td>

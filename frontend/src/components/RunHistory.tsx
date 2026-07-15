@@ -25,8 +25,12 @@ export function RunHistory({ jobs, activeJobId }: { jobs: AnalysisJob[]; activeJ
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
-            {jobs.map((job) => (
-              <tr key={job.job_id} className={job.job_id === activeJobId ? "bg-blue-50/60" : "hover:bg-slate-50"}>
+            {jobs.map((job, index) => (
+              <tr
+                key={job.job_id}
+                className={`motion-row ${job.job_id === activeJobId ? "bg-blue-50/60" : "hover:bg-slate-50"}`}
+                style={{ animationDelay: `${index * 35}ms` }}
+              >
                 <td className="px-4 py-3 font-mono text-xs text-slate-700">{job.job_id}</td>
                 <td className="px-4 py-3">
                   <span className="inline-flex items-center gap-2 rounded-md bg-slate-100 px-2 py-1 font-semibold capitalize text-slate-700">
