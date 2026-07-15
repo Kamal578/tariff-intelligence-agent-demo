@@ -1,132 +1,176 @@
 # Tariff Intelligence Agent Demo
 
-Synthetic technical-interview demo of an enterprise tariff data remediation workflow. It mirrors a pattern where analysts maintain telecom tariff and pack data in Excel, while an AI-assisted review process detects bad records, retrieves policy evidence, proposes structured corrections, and applies only human-approved changes.
+Synthetic technical-interview demo of an enterprise tariff remediation workflow. Analysts start with an Excel tariff file, the agent detects bad rows, searches mock enterprise sources, proposes structured updates with evidence, routes changes to human review, and writes only approved updates to a new Excel workbook.
 
-No real company, customer, tariff, or internal knowledge-base data is included.
+No real company data is included. No real Confluence, Gmail, IMAP, Atlassian, or enterprise connector is used.
 
 ## Business Problem
 
-Telecom analytics teams often receive Excel files with missing, outdated, or conflicting tariff fields. Before reports can be trusted, analysts need to verify values against Confluence pages, wiki rules, and email updates. This demo automates that workflow while preserving human approval before any spreadsheet mutation.
+Telecom reporting teams often maintain tariff and pack data in Excel. Missing prices, stale pack names, retired products, invalid activation codes, and conflicting status values can break downstream reporting. In a real enterprise setting, analysts would manually search Confluence, wiki notes, and email announcements before correcting the file. This demo simulates that workflow with local mock sources and a human-in-the-loop approval gate.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    Excel["Synthetic Excel input"] --> Tools["Deterministic issue detection"]
-    Tools --> RAG["LangChain + ChromaDB retrieval"]
-    KB["Synthetic Confluence / Wiki / Email / Policy docs"] --> RAG
-    RAG --> LLM["Gemini structured JSON provider"]
-    LLM --> Validate["Pydantic validation"]
-    Validate --> Fallback["Deterministic fallback when Gemini is unavailable or invalid"]
-    Fallback --> Review["Streamlit human review UI"]
-    Validate --> Review
-    Review --> Approved["Approved / rejected decisions"]
-    Approved --> Output["Updated Excel, audit JSON, Markdown report"]
-    API["FastAPI backend"] --> Tools
-    API --> Review
+    Excel["Excel tariff_packs.xlsx"] --> Detect["Deterministic issue detection"]
+    Detect --> Query["Issue-aware search queries"]
+    Sources["Mock Confluence / Wiki / Inbox JSON"] --> Connectors["Local mock connector router"]
+    Query --> Connectors
+    Connectors --> Evidence["Ranked evidence + conflicts"]
+    Evidence --> LLM["Gemini JSON proposal or fallback"]
+    LLM --> Pydantic["Pydantic validation"]
+    Pydantic --> API["FastAPI review API"]
+    API --> React["React analyst dashboard"]
+    React --> Review["Approve / reject"]
+    Review --> Output["Updated Excel + audit_log.json + report.md"]
 ```
 
-## Data Flow
+## Demo Workflow
 
-1. `data/input/tariff_packs.xlsx` is loaded with `pandas` and `openpyxl`.
-2. Deterministic tools detect missing fields, invalid activation codes, duplicate names, stale dates, price anomalies, tariff mismatches, and known synthetic value mismatches.
-3. Knowledge-base Markdown files are chunked and indexed in local ChromaDB using a deterministic hashing embedding, so no external embedding API is required.
-4. The agent retrieves evidence and asks Gemini for one strict JSON `ProposedUpdate` per issue.
-5. If `GEMINI_API_KEY` is missing or the model returns invalid JSON, deterministic fallback logic generates structured proposals.
-6. Analysts approve or reject proposals in Streamlit or through the FastAPI `/review` endpoint.
-7. `/apply-approved` writes approved updates to `data/output/updated_tariff_packs.xlsx` and produces `audit_log.json` plus `review_report.md`.
+1. Start the FastAPI backend.
+2. Start the React dashboard.
+3. Click **Run Analysis**.
+4. Review original Excel records, generated proposals, confidence, risk, and conflict badges.
+5. Open a proposal and inspect Confluence/wiki/email evidence cards.
+6. Use mock source search for queries like `YouthMax 10GB price` or `Student Social discontinued`.
+7. Approve or reject individual proposals.
+8. Click **Apply Approved Updates**.
+9. Download `updated_tariff_packs.xlsx`, `audit_log.json`, and `report.md`.
 
-## Tech Stack
+## Mock Sources
 
-- Python 3.11+
-- FastAPI backend
-- Streamlit frontend
-- Gemini via `google-genai`
-- LangChain + ChromaDB for local retrieval
-- Pydantic for structured data contracts
-- pandas + openpyxl for Excel I/O
-- pytest for test coverage
-- python-dotenv for local configuration
+Mock sources live in `data/mock_sources/`:
+
+- `confluence_pages.json`: 10 approved/deprecated/draft product pages.
+- `wiki_pages.json`: 7 operational rule and team-note pages.
+- `inbox_emails.json`: 8 synthetic update emails.
+- `source_metadata.json`: counts and mock-source metadata.
+
+These files intentionally include conflicts:
+
+- YouthMax 10GB old price `11.90 AZN` vs approved `12.90 AZN`.
+- Business Pro 25GB renamed to Business Pro Plus.
+- Night Owl 5GB old activation code `*123*50#` vs approved `*123*55#`.
+- Student Social 3GB discontinued after older active notes.
+- Family Data 18GB replaced by Family Share 20GB.
+- Roaming Lite 1GB draft `10` minutes vs approved `20` minutes.
+
+Mock sources are used because this is an interview-safe synthetic demo. Real connectors would require credentials, permissions, source-level ACLs, rate-limit handling, and confidential data controls that do not belong in a portable demo.
 
 ## Run Locally
+
+Backend:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-```
-
-Optional Gemini setup:
-
-```bash
-# Edit .env and add:
-GEMINI_API_KEY=your_key_here
-GEMINI_MODEL=gemini-2.5-flash
-```
-
-Start the backend:
-
-```bash
+# Optional: add GEMINI_API_KEY to .env
 uvicorn app.main:app --reload
 ```
 
-Start the review UI in a second terminal:
+React frontend:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open:
+
+```text
+Backend:  http://127.0.0.1:8000
+Frontend: http://127.0.0.1:5173
+```
+
+Optional custom API URL:
+
+```bash
+VITE_API_BASE_URL=http://127.0.0.1:8001 npm run dev
+```
+
+Streamlit fallback/dev UI remains available:
 
 ```bash
 streamlit run ui/streamlit_app.py
 ```
 
-If the backend runs on a different URL:
+## API Endpoints
 
-```bash
-API_BASE_URL=http://localhost:8001 streamlit run ui/streamlit_app.py
+- `GET /health`
+- `GET /records`
+- `POST /process`
+- `GET /proposals`
+- `GET /proposals/{proposal_id}`
+- `POST /review`
+- `POST /apply-approved`
+- `GET /audit-log`
+- `GET /report`
+- `GET /download/updated-excel`
+- `GET /download/audit-json`
+- `GET /download/report-md`
+- `GET /sources/search?q=YouthMax%2010GB%20price`
+- `GET /sources/stats`
+- `POST /reset-demo`
+
+## Gemini and Fallback Mode
+
+Gemini support uses `google-genai` and reads:
+
+```text
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-2.5-flash
 ```
 
-## API Workflow
+If `GEMINI_API_KEY` is missing or the model response is invalid, deterministic fallback logic still generates valid `ProposedUpdate` objects using synthetic reference values and retrieved mock evidence. The full dashboard, approval flow, Excel output, audit log, and tests work offline.
 
-```bash
-curl http://localhost:8000/health
-curl -X POST http://localhost:8000/ingest
-curl -X POST http://localhost:8000/process
-curl http://localhost:8000/records
-curl http://localhost:8000/proposals
-curl -X POST http://localhost:8000/review \
-  -H "Content-Type: application/json" \
-  -d '{"pack_id":"PK001","field_name":"price_azn","decision":"approved","reviewer":"demo","reasoning":"Evidence supports the correction."}'
-curl -X POST http://localhost:8000/apply-approved
-curl http://localhost:8000/report
-```
+## Technical Decisions
 
-## Demo Script
+- Excel mirrors real analyst workflows and makes the before/after artifact easy to inspect.
+- Mock connectors keep the demo local and interview-safe while making source retrieval explicit.
+- Evidence ranking boosts exact pack matches, freshness, approved Confluence pages, and source priority.
+- Pydantic enforces structured proposals before they enter review.
+- Human approval is required before any Excel output is written.
+- React is the primary demo UI; Streamlit remains a quick dev fallback.
+- Local JSON state keeps the project lightweight: `data/output/proposals.json`, `review_decisions.json`, `audit_log.json`, `report.md`, and `updated_tariff_packs.xlsx`.
 
-1. Show `data/input/tariff_packs.xlsx` and point out messy records such as missing price, invalid activation code, stale dates, duplicate pack names, and conflicting status.
-2. Start FastAPI and Streamlit.
-3. Click **Build Knowledge Index**.
-4. Click **Run Tariff Analysis**.
-5. Filter proposed updates by risk or confidence.
-6. Approve a low-risk update, such as `PK001 price_azn -> 12.90`.
-7. Reject a different proposal to show that rejected values stay out of the workbook.
-8. Click **Apply Approved Updates**.
-9. Download `updated_tariff_packs.xlsx`, `audit_log.json`, and `review_report.md`.
+## Trade-Offs
 
-## Fallback Mode
+- The search layer is deterministic keyword ranking, not semantic search, so behavior is explainable but less flexible than production retrieval.
+- State is file-based rather than transactional.
+- The fallback proposal engine is intentionally rule-driven for demo reliability.
+- Authentication and source permissions are omitted because all sources are synthetic local files.
 
-The demo runs without Gemini. When `GEMINI_API_KEY` is absent, the provider uses deterministic synthetic reference values and retrieved evidence metadata to produce valid `ProposedUpdate` objects. This keeps the review UI, Excel mutation, audit trail, and tests fully functional offline.
+## Production Improvements
 
-## Key Technical Decisions
-
-- Excel mirrors the analyst workflow and avoids hiding the business problem behind a custom database.
-- ChromaDB provides local retrieval without paid search or hosted vector infrastructure.
-- Deterministic hashing embeddings keep the demo self-contained and reproducible.
-- Pydantic validates model outputs before proposals enter the review workflow.
-- Human approval is mandatory before writing any output workbook.
-- Audit artifacts are file-based JSON and Markdown so the demo is easy to inspect in an interview.
+- Real Confluence API connector.
+- Gmail or Microsoft Graph connector.
+- Auth/RBAC and source-level permissions.
+- Postgres persistence.
+- Background jobs and queues.
+- Observability, tracing, and prompt/version telemetry.
+- Evaluation datasets for proposal quality.
+- Analyst feedback loop for continuous improvement.
+- Docker/Kubernetes deployment.
+- CI/CD security scanning and dependency governance.
 
 ## Tests
 
 ```bash
 python -m pytest
+cd frontend && npm run build
 ```
 
-Current coverage focuses on schema validation, deterministic issue detection, fallback proposal generation, and approved-only Excel mutation.
+Current tests cover issue detection, mock connector search, evidence ranking, source conflict detection, proposal validation, review decisions, and approved-only Excel updates.
+
+## Three-Minute Demo Script
+
+1. Show `data/input/tariff_packs.xlsx` and point out rows with old prices, missing activation codes, discontinued packs, and duplicate names.
+2. Open the React dashboard and click **Run Analysis**.
+3. Show metrics: total records, issues, generated proposals, high-risk proposals, approved/rejected counts, and source conflicts.
+4. Open the YouthMax 10GB price proposal. Highlight old value `11.90`, proposed value `12.90`, conflict badge, and evidence cards showing old draft vs approved sources.
+5. Use source search for `Student Social discontinued` to show the agent is searching mock enterprise evidence rather than guessing.
+6. Approve one low-risk proposal and reject one conflicting proposal.
+7. Click **Apply Approved Updates** and download the updated Excel plus audit/report artifacts.
