@@ -5,6 +5,7 @@ const downloads = [
   ["Updated Excel", "/download/updated-excel", FileSpreadsheet],
   ["Audit JSON", "/download/audit-json", FileArchive],
   ["Markdown report", "/download/report-md", FileText],
+  ["Run package ZIP", "/download/run-package", FileArchive],
 ] as const;
 
 export function DownloadsPanel({
@@ -29,7 +30,7 @@ export function DownloadsPanel({
           <Download className="h-4 w-4" /> Apply Approved Updates
         </button>
       </div>
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-4">
         {downloads.map(([label, path, Icon]) => (
           <a
             key={path}

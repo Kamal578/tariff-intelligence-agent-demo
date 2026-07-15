@@ -19,7 +19,8 @@ flowchart LR
     Connectors --> Evidence["Ranked evidence + conflicts"]
     Evidence --> LLM["Gemini JSON proposal or fallback"]
     LLM --> Pydantic["Pydantic validation"]
-    Pydantic --> API["FastAPI review API"]
+    Pydantic --> Jobs["Analysis job + run history"]
+    Jobs --> API["FastAPI review API"]
     API --> React["React analyst dashboard"]
     React --> Review["Approve / reject"]
     Review --> Output["Updated Excel + audit_log.json + report.md"]
@@ -35,7 +36,19 @@ flowchart LR
 6. Use mock source search for queries like `YouthMax 10GB price` or `Student Social discontinued`.
 7. Approve or reject individual proposals.
 8. Click **Apply Approved Updates**.
-9. Download `updated_tariff_packs.xlsx`, `audit_log.json`, and `report.md`.
+9. Download `updated_tariff_packs.xlsx`, `audit_log.json`, `report.md`, or the full run package ZIP.
+
+## Production-Style Workflow Features
+
+- Job-based analysis runs with persisted status, stage, progress, timestamps, requested mode, actual mode, and errors.
+- Dashboard sidebar with dedicated views for metrics, analysis runs, review queue, sources, audit/downloads, and runtime settings.
+- Runtime readiness checks for backend status, Gemini configuration, source counts, and mock connector safety.
+- Proposal review filters for risk, status, confidence, conflicts, and free-text pack/field search.
+- Field-level proposal diff showing current Excel value versus proposed value.
+- Evidence traceability summary showing source authority, freshness, conflicts, and approved/deprecated source counts.
+- Analyst review comments are stored with approve/reject decisions.
+- Applied proposals move to `applied` after approved Excel mutations are written.
+- Exportable run package ZIP for handoff and interview inspection.
 
 ## Mock Sources
 
@@ -135,6 +148,10 @@ streamlit run ui/streamlit_app.py
 ## API Endpoints
 
 - `GET /health`
+- `GET /config/status`
+- `POST /analysis-jobs`
+- `GET /analysis-jobs`
+- `GET /analysis-jobs/{job_id}`
 - `GET /records`
 - `POST /process` with `{"mode": "preview"}` or `{"mode": "gemini"}`
 - `GET /proposals`
@@ -146,6 +163,7 @@ streamlit run ui/streamlit_app.py
 - `GET /download/updated-excel`
 - `GET /download/audit-json`
 - `GET /download/report-md`
+- `GET /download/run-package`
 - `GET /sources/search?q=YouthMax%2010GB%20price`
 - `GET /sources/stats`
 - `POST /reset-demo`
@@ -178,7 +196,7 @@ If `GEMINI_API_KEY` is missing or the model response is invalid while Gemini mod
 - Pydantic enforces structured proposals before they enter review.
 - Human approval is required before any Excel output is written.
 - React is the primary demo UI; Streamlit remains a quick dev fallback.
-- Local JSON state keeps the project lightweight: `data/output/proposals.json`, `review_decisions.json`, `audit_log.json`, `report.md`, and `updated_tariff_packs.xlsx`.
+- Local JSON state keeps the project lightweight: `data/output/proposals.json`, `review_decisions.json`, `analysis_runs.json`, `audit_log.json`, `report.md`, `analysis_run_package.zip`, and `updated_tariff_packs.xlsx`.
 
 ## Trade-Offs
 
@@ -193,7 +211,7 @@ If `GEMINI_API_KEY` is missing or the model response is invalid while Gemini mod
 - Gmail or Microsoft Graph connector.
 - Auth/RBAC and source-level permissions.
 - Postgres persistence.
-- Background jobs and queues.
+- Replace in-process background jobs with a durable queue such as Celery/RQ/Temporal.
 - Observability, tracing, and prompt/version telemetry.
 - Evaluation datasets for proposal quality.
 - Analyst feedback loop for continuous improvement.
@@ -209,7 +227,7 @@ docker compose config
 docker compose up --build
 ```
 
-Current tests cover issue detection, mock connector search, evidence ranking, source conflict detection, proposal validation, review decisions, and approved-only Excel updates.
+Current tests cover issue detection, mock connector search, evidence ranking, source conflict detection, proposal validation, analysis run history, review decisions, approved-only Excel updates, applied proposal status, and package export.
 
 ## Three-Minute Demo Script
 

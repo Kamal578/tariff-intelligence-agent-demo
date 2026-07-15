@@ -1,4 +1,5 @@
 from pathlib import Path
+from zipfile import ZipFile
 
 from openpyxl import load_workbook
 
@@ -102,6 +103,11 @@ def test_apply_approved_updates_only_mutates_approved_fields(tmp_path: Path) -> 
     assert row[activation_idx] == "*123*09#"
     assert Path(result["audit_log"]).exists()
     assert Path(result["report"]).exists()
+    assert Path(result["package"]).exists()
+    with ZipFile(result["package"]) as archive:
+        assert "audit/audit_log.json" in archive.namelist()
+        assert "audit/review_report.md" in archive.namelist()
+        assert "output/updated_tariff_packs.xlsx" in archive.namelist()
     assert {entry["decision"] for entry in load_audit_log(settings)} == {"approved", "rejected"}
     applied = [
         proposal

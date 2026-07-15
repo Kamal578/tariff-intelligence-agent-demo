@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from typing import Any
+from zipfile import ZIP_DEFLATED, ZipFile
 
 from app.config import Settings, get_settings
 from app.excel_io import load_tariff_dataframe, write_tariff_dataframe
@@ -29,7 +30,32 @@ def apply_approved_updates(settings: Settings | None = None) -> dict[str, Any]:
         "output_excel": str(output_path),
         "audit_log": str(settings.audit_log_path),
         "report": str(report_path),
+        "package": str(build_run_package(settings)),
     }
+
+
+def build_run_package(settings: Settings | None = None) -> str:
+    settings = settings or get_settings()
+    if not settings.report_path.exists():
+        generate_markdown_report(settings=settings)
+
+    files = [
+        (settings.input_excel_path, "input/tariff_packs.xlsx"),
+        (settings.records_state_path, "state/records.json"),
+        (settings.issues_state_path, "state/issues.json"),
+        (settings.proposals_state_path, "state/proposals.json"),
+        (settings.review_state_path, "state/review_decisions.json"),
+        (settings.audit_log_path, "audit/audit_log.json"),
+        (settings.report_path, "audit/review_report.md"),
+        (settings.analysis_runs_path, "runs/analysis_runs.json"),
+        (settings.updated_excel_path, "output/updated_tariff_packs.xlsx"),
+    ]
+    settings.run_package_path.parent.mkdir(parents=True, exist_ok=True)
+    with ZipFile(settings.run_package_path, "w", compression=ZIP_DEFLATED) as archive:
+        for path, archive_name in files:
+            if path.exists():
+                archive.write(path, archive_name)
+    return str(settings.run_package_path)
 
 
 def build_audit_log(
@@ -90,6 +116,19 @@ def generate_markdown_report(
         "# Tariff Review Report",
         "",
         f"Generated at: {datetime.now(UTC).isoformat()}",
+        "",
+        "## Executive Summary",
+        "",
+        (
+            f"The run produced {len(proposals)} structured tariff correction proposal(s). "
+            f"{approved_count} approved update(s) are eligible for Excel mutation and "
+            f"{rejected_count} rejected proposal(s) remain in audit history."
+        ),
+        (
+            "Source conflicts were found in "
+            f"{sum(1 for proposal in proposals if proposal.source_conflict_detected)} proposal(s), "
+            "which should receive manual attention before operational rollout."
+        ),
         "",
         "## Summary",
         "",

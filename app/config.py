@@ -57,6 +57,10 @@ class Settings(BaseSettings):
     def analysis_runs_path(self) -> Path:
         return self.output_dir / "analysis_runs.json"
 
+    @property
+    def run_package_path(self) -> Path:
+        return self.output_dir / "analysis_run_package.zip"
+
 
 @lru_cache
 def get_settings() -> Settings:

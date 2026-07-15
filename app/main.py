@@ -16,7 +16,7 @@ from app.pipeline import (
     load_records_state,
     process_tariffs,
 )
-from app.reporting import apply_approved_updates, generate_markdown_report, load_audit_log
+from app.reporting import apply_approved_updates, build_run_package, generate_markdown_report, load_audit_log
 from app.review_store import load_review_decisions, save_review_decision
 from app.schemas import ProcessRequest, ReviewDecision
 
@@ -158,6 +158,13 @@ def download_report_md() -> FileResponse:
     return _download(settings.report_path, "report.md")
 
 
+@app.get("/download/run-package", response_model=None)
+def download_run_package() -> FileResponse:
+    settings = get_settings()
+    build_run_package(settings)
+    return _download(settings.run_package_path, "analysis_run_package.zip")
+
+
 @app.get("/sources/search")
 def source_search(q: str = Query(..., min_length=2)) -> list[dict[str, object]]:
     return [item.model_dump(mode="json") for item in search_all_sources(q, settings=get_settings())]
@@ -168,17 +175,17 @@ def sources() -> list[dict[str, object]]:
     return load_source_documents(get_settings())
 
 
+@app.get("/sources/stats")
+def sources_stats() -> dict[str, object]:
+    return source_stats(get_settings())
+
+
 @app.get("/sources/{source_id}")
 def source_detail(source_id: str) -> dict[str, object]:
     document = get_source_document(source_id, get_settings())
     if document is None:
         raise HTTPException(status_code=404, detail=f"Source {source_id} not found")
     return document
-
-
-@app.get("/sources/stats")
-def sources_stats() -> dict[str, object]:
-    return source_stats(get_settings())
 
 
 @app.post("/reset-demo")
@@ -194,6 +201,7 @@ def reset_demo() -> dict[str, object]:
         settings.report_path,
         settings.updated_excel_path,
         settings.analysis_runs_path,
+        settings.run_package_path,
     ]:
         if path.exists():
             path.unlink()
