@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     app_env: str = Field(default="local", alias="APP_ENV")
     gemini_api_key: str | None = Field(default=None, alias="GEMINI_API_KEY")
     gemini_model: str = Field(default="gemini-2.5-flash", alias="GEMINI_MODEL")
+    analysis_progress_delay_ms: int = Field(default=25, alias="ANALYSIS_PROGRESS_DELAY_MS")
     chroma_dir: Path = Field(default=Path("data/chroma"), alias="CHROMA_DIR")
     input_excel_path: Path = Field(
         default=Path("data/input/tariff_packs.xlsx"), alias="INPUT_EXCEL_PATH"

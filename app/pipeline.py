@@ -43,7 +43,13 @@ def process_tariffs(
     _emit(progress_callback, "Running deterministic validation", 30)
     issues = detect_record_issues(records)
     _emit(progress_callback, "Retrieving source evidence", 50)
-    proposals, mode = generate_proposals(records, issues, settings, generation_mode=generation_mode)
+    proposals, mode = generate_proposals(
+        records,
+        issues,
+        settings,
+        generation_mode=generation_mode,
+        progress_callback=progress_callback,
+    )
     _emit(progress_callback, "Persisting review queue", 86)
     result = ProcessingResult(records=records, issues=issues, proposals=proposals, mode=mode)
     persist_processing_result(result, settings)

@@ -8,12 +8,12 @@ const stages = [
   ["Preparing review", ShieldCheck],
 ] as const;
 
-export function AnalysisOverlay({ visible, progress }: { visible: boolean; progress: number }) {
+export function AnalysisOverlay({ visible, progress, stage }: { visible: boolean; progress: number; stage?: string }) {
   if (!visible) return null;
 
   const clampedProgress = Math.max(0, Math.min(100, Math.round(progress)));
   const activeStageIndex = Math.min(stages.length - 1, Math.floor((clampedProgress / 100) * stages.length));
-  const activeStage = stages[activeStageIndex][0];
+  const activeStage = stage ?? stages[activeStageIndex][0];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 px-4 backdrop-blur-sm">

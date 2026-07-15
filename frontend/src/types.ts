@@ -110,6 +110,7 @@ export interface AnalysisJob {
   summary?: ProcessSummary | null;
   error?: string | null;
   created_at: string;
+  updated_at: string;
   started_at?: string | null;
   finished_at?: string | null;
 }

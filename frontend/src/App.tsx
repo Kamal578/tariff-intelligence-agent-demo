@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Bot, Play, RefreshCw, RotateCcw, Zap } from "lucide-react";
 import { api } from "./api";
 import { Header } from "./components/Header";
+import { ActiveRunPanel } from "./components/ActiveRunPanel";
 import { AnalysisOverlay } from "./components/AnalysisOverlay";
 import { AppSidebar } from "./components/AppSidebar";
 import type { AppView } from "./components/AppSidebar";
@@ -52,6 +53,10 @@ export default function App() {
   const selectedProposal = useMemo(
     () => proposals.find((proposal) => proposal.proposal_id === selectedId) ?? proposals[0],
     [proposals, selectedId],
+  );
+  const activeJob = useMemo(
+    () => jobs.find((job) => job.job_id === activeJobId),
+    [activeJobId, jobs],
   );
 
   async function refresh() {
@@ -105,7 +110,7 @@ export default function App() {
     };
 
     void poll();
-    const timer = window.setInterval(() => void poll(), 900);
+    const timer = window.setInterval(() => void poll(), 300);
     return () => window.clearInterval(timer);
   }, [activeJobId, analysisRunning]);
 
@@ -176,7 +181,7 @@ export default function App() {
   return (
     <div>
       <Header backendStatus={backendStatus} mode={summary?.mode} apiBaseUrl={api.baseUrl} />
-      <AnalysisOverlay visible={analysisRunning} progress={analysisProgress} />
+      <AnalysisOverlay visible={analysisRunning} progress={analysisProgress} stage={activeJob?.stage} />
       <div className="lg:flex">
         <AppSidebar activeView={activeView} onChange={setActiveView} />
         <main className="mx-auto w-full max-w-7xl space-y-5 px-6 py-6">
@@ -221,6 +226,7 @@ export default function App() {
           </button>
           {message && <span className="status-toast rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-700">{message}</span>}
         </div>
+        <ActiveRunPanel job={activeJob} />
         {analysisRunning && (
           <div className="rounded-lg border border-blue-100 bg-white p-3 shadow-soft">
             <div className="mb-2 flex items-center justify-between text-sm">

@@ -130,8 +130,21 @@ button:disabled {
   }
 }
 
+@keyframes live-run-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.14);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.06);
+  }
+}
+
 .analysis-card {
   animation: analysis-card-in 220ms ease-out;
+}
+
+.live-run-panel {
+  animation: motion-card-enter 220ms ease-out both, live-run-pulse 1.6s ease-in-out infinite;
 }
 
 .page-transition {
@@ -249,7 +262,8 @@ button:disabled {
   .page-transition,
   .motion-card,
   .motion-row,
-  .status-toast {
+  .status-toast,
+  .live-run-panel {
     animation: none;
     transition: none;
   }

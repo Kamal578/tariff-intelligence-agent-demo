@@ -100,6 +100,7 @@ def _upsert_job(job: AnalysisJob, settings: Settings) -> None:
             for item in read_json(settings.analysis_runs_path, [])
         ]
         by_id = {item.job_id: item for item in existing}
+        job.updated_at = datetime.now(UTC)
         by_id[job.job_id] = job
         jobs = sorted(by_id.values(), key=lambda item: item.created_at, reverse=True)
         write_json(settings.analysis_runs_path, [item.model_dump(mode="json") for item in jobs])
