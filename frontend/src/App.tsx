@@ -1,19 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { Archive, BookOpen, Bot, ClipboardList, Play, RefreshCw, RotateCcw, Zap } from "lucide-react";
+import { Bot, Play, RefreshCw, RotateCcw, Zap } from "lucide-react";
 import { api } from "./api";
 import { Header } from "./components/Header";
 import { AnalysisOverlay } from "./components/AnalysisOverlay";
+import { AppSidebar } from "./components/AppSidebar";
+import type { AppView } from "./components/AppSidebar";
 import { AuditLog } from "./components/AuditLog";
 import { DownloadsPanel } from "./components/DownloadsPanel";
 import { MetricsCards } from "./components/MetricsCards";
 import { ProposalDetailPanel } from "./components/ProposalDetailPanel";
 import { ProposalsBoard } from "./components/ProposalsBoard";
 import { RecordsTable } from "./components/RecordsTable";
+import { RunHistory } from "./components/RunHistory";
+import { SettingsPanel } from "./components/SettingsPanel";
 import { SourceSearch } from "./components/SourceSearch";
 import { SourcesOfTruth } from "./components/SourcesOfTruth";
 import { WorkflowStepper } from "./components/WorkflowStepper";
-import type { AnalysisMode, AuditEntry, Metrics, ProcessSummary, ProposedUpdate, SourceDocument, TariffRecord } from "./types";
+import type { AnalysisJob, AnalysisMode, AuditEntry, ConfigStatus, Metrics, ProcessSummary, ProposedUpdate, SourceDocument, TariffRecord } from "./types";
 
 const emptyMetrics: Metrics = {
   records: 0,
@@ -26,14 +30,17 @@ const emptyMetrics: Metrics = {
 };
 
 export default function App() {
-  const [activeView, setActiveView] = useState<"review" | "sources" | "audit">("review");
+  const [activeView, setActiveView] = useState<AppView>("dashboard");
   const [backendStatus, setBackendStatus] = useState<"checking" | "online" | "offline">("checking");
   const [summary, setSummary] = useState<ProcessSummary | undefined>();
+  const [config, setConfig] = useState<ConfigStatus | undefined>();
   const [metrics, setMetrics] = useState<Metrics>(emptyMetrics);
   const [records, setRecords] = useState<TariffRecord[]>([]);
   const [proposals, setProposals] = useState<ProposedUpdate[]>([]);
   const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
   const [sources, setSources] = useState<SourceDocument[]>([]);
+  const [jobs, setJobs] = useState<AnalysisJob[]>([]);
+  const [activeJobId, setActiveJobId] = useState<string | undefined>();
   const [selectedSourceId, setSelectedSourceId] = useState<string | undefined>();
   const [selectedId, setSelectedId] = useState<string | undefined>();
   const [analysisMode, setAnalysisMode] = useState<AnalysisMode>("preview");
@@ -48,18 +55,22 @@ export default function App() {
   );
 
   async function refresh() {
-    const [recordsData, proposalsData, metricsData, auditData, sourcesData] = await Promise.all([
+    const [recordsData, proposalsData, metricsData, auditData, sourcesData, jobsData, configData] = await Promise.all([
       api.getRecords(),
       api.getProposals(),
       api.getMetrics(),
       api.getAuditLog(),
       api.getSources(),
+      api.getAnalysisJobs(),
+      api.getConfigStatus(),
     ]);
     setRecords(recordsData);
     setProposals(proposalsData);
     setMetrics(metricsData);
     setAuditEntries(auditData);
     setSources(sourcesData);
+    setJobs(jobsData);
+    setConfig(configData);
     setSelectedSourceId((current) => current ?? sourcesData[0]?.source_id);
   }
 
@@ -72,19 +83,31 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!analysisRunning) return undefined;
+    if (!activeJobId || !analysisRunning) return undefined;
 
-    setAnalysisProgress((current) => Math.max(current, 8));
-    const timer = window.setInterval(() => {
-      setAnalysisProgress((current) => {
-        if (current >= 94) return current;
-        const remaining = 94 - current;
-        return Math.min(94, current + Math.max(2, Math.round(remaining * 0.18)));
-      });
-    }, 420);
+    const poll = async () => {
+      const job = await api.getAnalysisJob(activeJobId);
+      setJobs((current) => [job, ...current.filter((item) => item.job_id !== job.job_id)]);
+      setAnalysisProgress(job.progress);
+      if (job.status === "completed") {
+        setSummary(job.summary ?? undefined);
+        setMessage(`Run ${job.job_id} completed in ${job.actual_mode ?? job.requested_mode} mode.`);
+        setBusy(false);
+        setAnalysisRunning(false);
+        await refresh();
+      }
+      if (job.status === "failed") {
+        setMessage(job.error ?? "Analysis job failed.");
+        setBusy(false);
+        setAnalysisRunning(false);
+        await refresh();
+      }
+    };
 
+    void poll();
+    const timer = window.setInterval(() => void poll(), 900);
     return () => window.clearInterval(timer);
-  }, [analysisRunning]);
+  }, [activeJobId, analysisRunning]);
 
   async function runAnalysis() {
     setBusy(true);
@@ -92,18 +115,14 @@ export default function App() {
     setAnalysisProgress(4);
     setMessage(undefined);
     try {
-      const result = await api.runAnalysis(analysisMode);
-      setAnalysisProgress(100);
-      setSummary(result);
-      setMessage(`Generated ${result.proposals} proposals from ${result.issues} issues in ${result.mode} mode.`);
-      await new Promise((resolve) => window.setTimeout(resolve, 300));
-      await refresh();
+      const job = await api.startAnalysisJob(analysisMode);
+      setActiveJobId(job.job_id);
+      setJobs((current) => [job, ...current.filter((item) => item.job_id !== job.job_id)]);
+      setActiveView("runs");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Run analysis failed.");
-    } finally {
       setBusy(false);
       setAnalysisRunning(false);
-      window.setTimeout(() => setAnalysisProgress(0), 400);
     }
   }
 
@@ -112,10 +131,12 @@ export default function App() {
     try {
       await api.resetDemo();
       setSummary(undefined);
+      setActiveJobId(undefined);
       setSelectedId(undefined);
       setRecords([]);
       setProposals([]);
       setAuditEntries([]);
+      setJobs([]);
       setMetrics(emptyMetrics);
       setMessage("Demo state reset.");
     } finally {
@@ -156,8 +177,10 @@ export default function App() {
     <div>
       <Header backendStatus={backendStatus} mode={summary?.mode} apiBaseUrl={api.baseUrl} />
       <AnalysisOverlay visible={analysisRunning} progress={analysisProgress} />
-      <main className="mx-auto max-w-7xl space-y-5 px-6 py-6">
-        <div className="flex flex-wrap gap-3">
+      <div className="lg:flex">
+        <AppSidebar activeView={activeView} onChange={setActiveView} />
+        <main className="mx-auto w-full max-w-7xl space-y-5 px-6 py-6">
+          <div className="flex flex-wrap gap-3">
           <div className="inline-flex rounded-md border border-line bg-white p-1 shadow-soft">
             <ModeButton
               active={analysisMode === "preview"}
@@ -201,7 +224,7 @@ export default function App() {
         {analysisRunning && (
           <div className="rounded-lg border border-blue-100 bg-white p-3 shadow-soft">
             <div className="mb-2 flex items-center justify-between text-sm">
-              <span className="font-semibold text-slate-700">Analysis progress</span>
+              <span className="font-semibold text-slate-700">{jobs.find((job) => job.job_id === activeJobId)?.stage ?? "Analysis progress"}</span>
               <span className="tabular-nums font-semibold text-blue-700">{Math.round(analysisProgress)}%</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-blue-50">
@@ -210,12 +233,15 @@ export default function App() {
           </div>
         )}
         <WorkflowStepper activeIndex={analysisRunning ? 4 : proposals.length ? 4 : records.length ? 2 : 0} running={analysisRunning} />
-        <MetricsCards metrics={metrics} />
-        <nav className="flex flex-wrap gap-2 rounded-lg border border-line bg-white p-2 shadow-soft">
-          <ViewButton active={activeView === "review"} onClick={() => setActiveView("review")} icon={<ClipboardList className="h-4 w-4" />} label="Review Queue" />
-          <ViewButton active={activeView === "sources"} onClick={() => setActiveView("sources")} icon={<BookOpen className="h-4 w-4" />} label="Sources of Truth" />
-          <ViewButton active={activeView === "audit"} onClick={() => setActiveView("audit")} icon={<Archive className="h-4 w-4" />} label="Audit & Downloads" />
-        </nav>
+
+        {activeView === "dashboard" && (
+          <div className="space-y-5">
+            <MetricsCards metrics={metrics} />
+            <RunHistory jobs={jobs.slice(0, 5)} activeJobId={activeJobId} />
+          </div>
+        )}
+
+        {activeView === "runs" && <RunHistory jobs={jobs} activeJobId={activeJobId} />}
 
         {activeView === "review" && (
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
@@ -248,32 +274,13 @@ export default function App() {
             <AuditLog entries={auditEntries} />
           </div>
         )}
-      </main>
-    </div>
-  );
-}
 
-function ViewButton({
-  active,
-  onClick,
-  icon,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: ReactNode;
-  label: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold ${
-        active ? "bg-ink text-white" : "text-slate-600 hover:bg-slate-100"
-      }`}
-    >
-      {icon}
-      {label}
-    </button>
+        {activeView === "settings" && (
+          <SettingsPanel config={config} analysisMode={analysisMode} onModeChange={setAnalysisMode} />
+        )}
+        </main>
+      </div>
+    </div>
   );
 }
 

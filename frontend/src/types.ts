@@ -78,6 +78,7 @@ export interface ProposedUpdate {
 }
 
 export type AnalysisMode = "preview" | "gemini";
+export type AnalysisJobStatus = "queued" | "running" | "completed" | "failed";
 
 export interface Metrics {
   records: number;
@@ -97,6 +98,31 @@ export interface ProcessSummary {
   source_conflicts: number;
   mode: string;
   generated_at: string;
+}
+
+export interface AnalysisJob {
+  job_id: string;
+  requested_mode: AnalysisMode;
+  status: AnalysisJobStatus;
+  stage: string;
+  progress: number;
+  actual_mode?: string | null;
+  summary?: ProcessSummary | null;
+  error?: string | null;
+  created_at: string;
+  started_at?: string | null;
+  finished_at?: string | null;
+}
+
+export interface ConfigStatus {
+  environment: string;
+  gemini_configured: boolean;
+  gemini_model: string;
+  input_excel: string;
+  output_dir: string;
+  mock_sources_ready: boolean;
+  source_counts: Record<string, number>;
+  real_connectors_used: boolean;
 }
 
 export interface AuditEntry {

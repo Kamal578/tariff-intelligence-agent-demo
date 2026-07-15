@@ -1,4 +1,15 @@
-import type { AnalysisMode, AuditEntry, Evidence, Metrics, ProcessSummary, ProposedUpdate, SourceDocument, TariffRecord } from "./types";
+import type {
+  AnalysisJob,
+  AnalysisMode,
+  AuditEntry,
+  ConfigStatus,
+  Evidence,
+  Metrics,
+  ProcessSummary,
+  ProposedUpdate,
+  SourceDocument,
+  TariffRecord,
+} from "./types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
@@ -17,12 +28,20 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 export const api = {
   baseUrl: API_BASE_URL,
   health: () => request<{ status: string }>("/health"),
+  getConfigStatus: () => request<ConfigStatus>("/config/status"),
   resetDemo: () => request<{ reset: boolean; removed: string[] }>("/reset-demo", { method: "POST" }),
   runAnalysis: (mode: AnalysisMode) =>
     request<ProcessSummary>("/process", {
       method: "POST",
       body: JSON.stringify({ mode }),
     }),
+  startAnalysisJob: (mode: AnalysisMode) =>
+    request<AnalysisJob>("/analysis-jobs", {
+      method: "POST",
+      body: JSON.stringify({ mode }),
+    }),
+  getAnalysisJob: (jobId: string) => request<AnalysisJob>(`/analysis-jobs/${encodeURIComponent(jobId)}`),
+  getAnalysisJobs: () => request<AnalysisJob[]>("/analysis-jobs"),
   getRecords: () => request<TariffRecord[]>("/records"),
   getProposals: () => request<ProposedUpdate[]>("/proposals"),
   getMetrics: () => request<Metrics>("/metrics"),

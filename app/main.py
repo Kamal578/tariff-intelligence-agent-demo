@@ -36,6 +36,23 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/config/status")
+def config_status() -> dict[str, object]:
+    settings = get_settings()
+    stats = source_stats(settings)
+    source_counts = stats["source_counts"]
+    return {
+        "environment": settings.app_env,
+        "gemini_configured": bool(settings.gemini_api_key),
+        "gemini_model": settings.gemini_model,
+        "input_excel": str(settings.input_excel_path),
+        "output_dir": str(settings.output_dir),
+        "mock_sources_ready": sum(source_counts.values()) > 0,
+        "source_counts": source_counts,
+        "real_connectors_used": stats["real_connectors_used"],
+    }
+
+
 @app.post("/ingest")
 def ingest() -> dict[str, object]:
     return ingest_knowledge(get_settings())
