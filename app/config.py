@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     )
     output_dir: Path = Field(default=Path("data/output"), alias="OUTPUT_DIR")
     knowledge_base_dir: Path = Path("data/knowledge_base")
+    mock_sources_dir: Path = Path("data/mock_sources")
 
     @property
     def records_state_path(self) -> Path:

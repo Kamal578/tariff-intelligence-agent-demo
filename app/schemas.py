@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, field_validator
 ProposalStatus = Literal["proposed", "approved", "rejected", "needs_review"]
 RiskLevel = Literal["low", "medium", "high"]
 DecisionValue = Literal["approved", "rejected"]
+SourceType = Literal["confluence", "wiki", "email"]
 
 
 class TariffRecord(BaseModel):
@@ -51,6 +52,20 @@ class MissingFieldIssue(BaseModel):
     current_value: Any = None
     description: str
     risk_level: RiskLevel = "medium"
+
+
+class Evidence(BaseModel):
+    source_id: str
+    source_type: SourceType
+    title_or_subject: str
+    author_or_owner: str | None = None
+    timestamp: datetime
+    fake_url: str
+    excerpt: str
+    relevance_score: float = Field(ge=0, le=1)
+    source_priority: Literal["high", "medium", "low"] = "medium"
+    document_status: Literal["approved", "deprecated", "draft", "n/a"] = "n/a"
+    matched_terms: list[str] = Field(default_factory=list)
 
 
 class RetrievedEvidence(BaseModel):
