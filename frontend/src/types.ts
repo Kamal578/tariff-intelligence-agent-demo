@@ -71,3 +71,20 @@ export interface ProcessSummary {
   mode: string;
   generated_at: string;
 }
+
+export interface AuditEntry {
+  timestamp: string;
+  proposal_id?: string | null;
+  pack_id: string;
+  pack_name?: string | null;
+  field_name: string;
+  old_value: unknown;
+  proposed_value: unknown;
+  issue_type?: string | null;
+  decision: "approved" | "rejected";
+  reviewer: string;
+  review_reasoning: string;
+  confidence_score?: number | null;
+  risk_level?: RiskLevel | null;
+  source_conflict_detected?: boolean | null;
+}

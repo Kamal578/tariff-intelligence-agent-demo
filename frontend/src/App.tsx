@@ -2,13 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { Play, RefreshCw, RotateCcw } from "lucide-react";
 import { api } from "./api";
 import { Header } from "./components/Header";
+import { AuditLog } from "./components/AuditLog";
+import { DownloadsPanel } from "./components/DownloadsPanel";
 import { MetricsCards } from "./components/MetricsCards";
 import { ProposalDetailPanel } from "./components/ProposalDetailPanel";
 import { ProposalsBoard } from "./components/ProposalsBoard";
 import { RecordsTable } from "./components/RecordsTable";
 import { SourceSearch } from "./components/SourceSearch";
 import { WorkflowStepper } from "./components/WorkflowStepper";
-import type { Metrics, ProcessSummary, ProposedUpdate, TariffRecord } from "./types";
+import type { AuditEntry, Metrics, ProcessSummary, ProposedUpdate, TariffRecord } from "./types";
 
 const emptyMetrics: Metrics = {
   records: 0,
@@ -26,6 +28,7 @@ export default function App() {
   const [metrics, setMetrics] = useState<Metrics>(emptyMetrics);
   const [records, setRecords] = useState<TariffRecord[]>([]);
   const [proposals, setProposals] = useState<ProposedUpdate[]>([]);
+  const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
   const [selectedId, setSelectedId] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | undefined>();
@@ -36,14 +39,16 @@ export default function App() {
   );
 
   async function refresh() {
-    const [recordsData, proposalsData, metricsData] = await Promise.all([
+    const [recordsData, proposalsData, metricsData, auditData] = await Promise.all([
       api.getRecords(),
       api.getProposals(),
       api.getMetrics(),
+      api.getAuditLog(),
     ]);
     setRecords(recordsData);
     setProposals(proposalsData);
     setMetrics(metricsData);
+    setAuditEntries(auditData);
   }
 
   useEffect(() => {
@@ -95,6 +100,19 @@ export default function App() {
     }
   }
 
+  async function applyApproved() {
+    setBusy(true);
+    try {
+      const result = await api.applyApproved();
+      await refresh();
+      setMessage(`Applied ${result.applied_updates} approved updates.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Apply approved updates failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div>
       <Header backendStatus={backendStatus} mode={summary?.mode} apiBaseUrl={api.baseUrl} />
@@ -130,6 +148,8 @@ export default function App() {
             <RecordsTable records={records} proposals={proposals} />
             <ProposalsBoard proposals={proposals} selectedId={selectedProposal?.proposal_id} onSelect={(proposal) => setSelectedId(proposal.proposal_id)} />
             <SourceSearch />
+            <DownloadsPanel busy={busy} onApply={applyApproved} />
+            <AuditLog entries={auditEntries} />
           </div>
           <ProposalDetailPanel
             proposal={selectedProposal}

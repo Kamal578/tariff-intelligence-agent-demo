@@ -1,4 +1,4 @@
-import type { Evidence, Metrics, ProcessSummary, ProposedUpdate, TariffRecord } from "./types";
+import type { AuditEntry, Evidence, Metrics, ProcessSummary, ProposedUpdate, TariffRecord } from "./types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
@@ -35,6 +35,7 @@ export const api = {
       }),
     }),
   applyApproved: () => request<{ applied_updates: number; output_excel: string }>("/apply-approved", { method: "POST" }),
+  getAuditLog: () => request<AuditEntry[]>("/audit-log"),
   searchSources: (query: string) =>
     request<Evidence[]>(`/sources/search?q=${encodeURIComponent(query)}`),
 };
