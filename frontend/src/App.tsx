@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Archive, BookOpen, ClipboardList, Play, RefreshCw, RotateCcw } from "lucide-react";
 import { api } from "./api";
 import { Header } from "./components/Header";
+import { AnalysisOverlay } from "./components/AnalysisOverlay";
 import { AuditLog } from "./components/AuditLog";
 import { DownloadsPanel } from "./components/DownloadsPanel";
 import { MetricsCards } from "./components/MetricsCards";
@@ -36,6 +37,7 @@ export default function App() {
   const [selectedSourceId, setSelectedSourceId] = useState<string | undefined>();
   const [selectedId, setSelectedId] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
+  const [analysisRunning, setAnalysisRunning] = useState(false);
   const [message, setMessage] = useState<string | undefined>();
 
   const selectedProposal = useMemo(
@@ -69,6 +71,7 @@ export default function App() {
 
   async function runAnalysis() {
     setBusy(true);
+    setAnalysisRunning(true);
     setMessage(undefined);
     try {
       const result = await api.runAnalysis();
@@ -79,6 +82,7 @@ export default function App() {
       setMessage(error instanceof Error ? error.message : "Run analysis failed.");
     } finally {
       setBusy(false);
+      setAnalysisRunning(false);
     }
   }
 
@@ -130,14 +134,15 @@ export default function App() {
   return (
     <div>
       <Header backendStatus={backendStatus} mode={summary?.mode} apiBaseUrl={api.baseUrl} />
+      <AnalysisOverlay visible={analysisRunning} />
       <main className="mx-auto max-w-7xl space-y-5 px-6 py-6">
         <div className="flex flex-wrap gap-3">
           <button
             disabled={busy || backendStatus !== "online"}
             onClick={runAnalysis}
-            className="inline-flex items-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+            className={`inline-flex items-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 ${analysisRunning ? "analysis-button-glow" : ""}`}
           >
-            <Play className="h-4 w-4" /> Run Analysis
+            <Play className={`h-4 w-4 ${analysisRunning ? "animate-pulse" : ""}`} /> {analysisRunning ? "Analyzing..." : "Run Analysis"}
           </button>
           <button
             disabled={busy || backendStatus !== "online"}
@@ -155,7 +160,7 @@ export default function App() {
           </button>
           {message && <span className="rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-700">{message}</span>}
         </div>
-        <WorkflowStepper activeIndex={proposals.length ? 4 : records.length ? 2 : 0} />
+        <WorkflowStepper activeIndex={analysisRunning ? 4 : proposals.length ? 4 : records.length ? 2 : 0} running={analysisRunning} />
         <MetricsCards metrics={metrics} />
         <nav className="flex flex-wrap gap-2 rounded-lg border border-line bg-white p-2 shadow-soft">
           <ViewButton active={activeView === "review"} onClick={() => setActiveView("review")} icon={<ClipboardList className="h-4 w-4" />} label="Review Queue" />
