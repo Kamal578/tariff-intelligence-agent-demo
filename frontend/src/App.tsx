@@ -6,6 +6,7 @@ import { MetricsCards } from "./components/MetricsCards";
 import { ProposalDetailPanel } from "./components/ProposalDetailPanel";
 import { ProposalsBoard } from "./components/ProposalsBoard";
 import { RecordsTable } from "./components/RecordsTable";
+import { SourceSearch } from "./components/SourceSearch";
 import { WorkflowStepper } from "./components/WorkflowStepper";
 import type { Metrics, ProcessSummary, ProposedUpdate, TariffRecord } from "./types";
 
@@ -128,6 +129,7 @@ export default function App() {
           <div className="space-y-5">
             <RecordsTable records={records} proposals={proposals} />
             <ProposalsBoard proposals={proposals} selectedId={selectedProposal?.proposal_id} onSelect={(proposal) => setSelectedId(proposal.proposal_id)} />
+            <SourceSearch />
           </div>
           <ProposalDetailPanel
             proposal={selectedProposal}

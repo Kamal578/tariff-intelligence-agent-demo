@@ -1,5 +1,6 @@
 import { Check, X } from "lucide-react";
 import type { ProposedUpdate } from "../types";
+import { EvidenceCard } from "./EvidenceCard";
 
 export function ProposalDetailPanel({
   proposal,
@@ -54,6 +55,18 @@ export function ProposalDetailPanel({
         <div>
           <h3 className="font-semibold">Freshness</h3>
           <p className="mt-1 text-slate-600">{proposal.source_freshness_summary}</p>
+        </div>
+      </div>
+      <div className="mt-5">
+        <h3 className="mb-2 text-sm font-semibold">Evidence</h3>
+        <div className="space-y-3">
+          {proposal.evidence_sources.length === 0 ? (
+            <div className="rounded-md bg-slate-50 p-3 text-sm text-slate-500">No evidence attached.</div>
+          ) : (
+            proposal.evidence_sources.map((evidence) => (
+              <EvidenceCard key={evidence.source_id} evidence={evidence} />
+            ))
+          )}
         </div>
       </div>
       <div className="mt-5 flex gap-3">
