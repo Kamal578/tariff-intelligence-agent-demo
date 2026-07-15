@@ -53,6 +53,10 @@ class Settings(BaseSettings):
     def updated_excel_path(self) -> Path:
         return self.output_dir / "updated_tariff_packs.xlsx"
 
+    @property
+    def analysis_runs_path(self) -> Path:
+        return self.output_dir / "analysis_runs.json"
+
 
 @lru_cache
 def get_settings() -> Settings:

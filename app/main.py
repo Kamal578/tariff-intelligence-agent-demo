@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse
 
 from app.config import get_settings
 from app.connectors.router import get_source_document, load_source_documents, search_all_sources, source_stats
+from app.jobs import create_analysis_job, get_analysis_job, list_analysis_jobs, run_analysis_job, summarize_processing_result
 from app.pipeline import (
     ingest_knowledge,
     load_issues_state,
@@ -44,15 +45,28 @@ def ingest() -> dict[str, object]:
 def process(request: ProcessRequest | None = None) -> dict[str, object]:
     request = request or ProcessRequest()
     result = process_tariffs(get_settings(), generation_mode=request.mode)
-    return {
-        "records": len(result.records),
-        "issues": len(result.issues),
-        "proposals": len(result.proposals),
-        "high_risk_proposals": sum(1 for item in result.proposals if item.risk_level == "high"),
-        "source_conflicts": sum(1 for item in result.proposals if item.source_conflict_detected),
-        "mode": result.mode,
-        "generated_at": result.generated_at,
-    }
+    return summarize_processing_result(result).model_dump(mode="json")
+
+
+@app.post("/analysis-jobs")
+def start_analysis_job(request: ProcessRequest, background_tasks: BackgroundTasks) -> dict[str, object]:
+    settings = get_settings()
+    job = create_analysis_job(request.mode, settings)
+    background_tasks.add_task(run_analysis_job, job.job_id, settings)
+    return job.model_dump(mode="json")
+
+
+@app.get("/analysis-jobs")
+def analysis_jobs() -> list[dict[str, object]]:
+    return [job.model_dump(mode="json") for job in list_analysis_jobs(get_settings())]
+
+
+@app.get("/analysis-jobs/{job_id}")
+def analysis_job(job_id: str) -> dict[str, object]:
+    job = get_analysis_job(job_id, get_settings())
+    if job is None:
+        raise HTTPException(status_code=404, detail=f"Analysis job {job_id} not found")
+    return job.model_dump(mode="json")
 
 
 @app.get("/records")
@@ -162,6 +176,7 @@ def reset_demo() -> dict[str, object]:
         settings.audit_log_path,
         settings.report_path,
         settings.updated_excel_path,
+        settings.analysis_runs_path,
     ]:
         if path.exists():
             path.unlink()

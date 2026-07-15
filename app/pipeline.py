@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from app.agent import generate_proposals
 from app.config import Settings, get_settings
@@ -29,14 +29,31 @@ def ingest_knowledge(settings: Settings | None = None) -> dict[str, Any]:
     return source_stats(settings)
 
 
-def process_tariffs(settings: Settings | None = None, generation_mode: AnalysisMode = "preview") -> ProcessingResult:
+ProgressCallback = Callable[[str, int], None]
+
+
+def process_tariffs(
+    settings: Settings | None = None,
+    generation_mode: AnalysisMode = "preview",
+    progress_callback: ProgressCallback | None = None,
+) -> ProcessingResult:
     settings = settings or get_settings()
+    _emit(progress_callback, "Loading Excel workbook", 15)
     records = load_tariff_records(settings.input_excel_path)
+    _emit(progress_callback, "Running deterministic validation", 30)
     issues = detect_record_issues(records)
+    _emit(progress_callback, "Retrieving source evidence", 50)
     proposals, mode = generate_proposals(records, issues, settings, generation_mode=generation_mode)
+    _emit(progress_callback, "Persisting review queue", 86)
     result = ProcessingResult(records=records, issues=issues, proposals=proposals, mode=mode)
     persist_processing_result(result, settings)
+    _emit(progress_callback, "Ready for analyst review", 100)
     return result
+
+
+def _emit(callback: ProgressCallback | None, stage: str, progress: int) -> None:
+    if callback:
+        callback(stage, progress)
 
 
 def persist_processing_result(result: ProcessingResult, settings: Settings) -> None:

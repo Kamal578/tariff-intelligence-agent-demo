@@ -12,6 +12,7 @@ DecisionValue = Literal["approved", "rejected"]
 SourceType = Literal["confluence", "wiki", "email"]
 AnalysisMode = Literal["preview", "gemini"]
 ProcessingMode = Literal["preview", "gemini", "fallback", "mixed"]
+AnalysisJobStatus = Literal["queued", "running", "completed", "failed"]
 IssueType = Literal[
     "missing_price",
     "missing_validity",
@@ -124,3 +125,27 @@ class ProcessingResult(BaseModel):
     proposals: list[ProposedUpdate]
     mode: ProcessingMode = "preview"
     generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class ProcessSummary(BaseModel):
+    records: int = 0
+    issues: int = 0
+    proposals: int = 0
+    high_risk_proposals: int = 0
+    source_conflicts: int = 0
+    mode: ProcessingMode = "preview"
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class AnalysisJob(BaseModel):
+    job_id: str
+    requested_mode: AnalysisMode = "preview"
+    status: AnalysisJobStatus = "queued"
+    stage: str = "Queued"
+    progress: int = Field(default=0, ge=0, le=100)
+    actual_mode: ProcessingMode | None = None
+    summary: ProcessSummary | None = None
+    error: str | None = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    started_at: datetime | None = None
+    finished_at: datetime | None = None

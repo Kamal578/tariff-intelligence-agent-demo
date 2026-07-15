@@ -3,6 +3,7 @@ from pathlib import Path
 from openpyxl import load_workbook
 
 from app.config import Settings
+from app.jobs import create_analysis_job, list_analysis_jobs, run_analysis_job
 from app.pipeline import ingest_knowledge, process_tariffs
 from app.reporting import apply_approved_updates, load_audit_log
 from app.review_store import save_review_decision
@@ -46,6 +47,22 @@ def test_gemini_mode_falls_back_without_api_key(tmp_path: Path) -> None:
 
     assert result.mode == "fallback"
     assert result.proposals
+
+
+def test_analysis_job_tracks_completed_run(tmp_path: Path) -> None:
+    settings = make_settings(tmp_path)
+    job = create_analysis_job("preview", settings)
+
+    completed = run_analysis_job(job.job_id, settings)
+    runs = list_analysis_jobs(settings)
+
+    assert completed.status == "completed"
+    assert completed.progress == 100
+    assert completed.stage == "Completed"
+    assert completed.actual_mode == "preview"
+    assert completed.summary is not None
+    assert completed.summary.records == 28
+    assert runs[0].job_id == job.job_id
 
 
 def test_apply_approved_updates_only_mutates_approved_fields(tmp_path: Path) -> None:
