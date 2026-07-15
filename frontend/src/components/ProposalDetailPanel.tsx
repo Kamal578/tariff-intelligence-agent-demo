@@ -6,11 +6,13 @@ export function ProposalDetailPanel({
   proposal,
   onApprove,
   onReject,
+  onOpenSource,
   busy,
 }: {
   proposal?: ProposedUpdate;
   onApprove: (proposal: ProposedUpdate) => void;
   onReject: (proposal: ProposedUpdate) => void;
+  onOpenSource?: (sourceId: string) => void;
   busy: boolean;
 }) {
   if (!proposal) {
@@ -64,7 +66,7 @@ export function ProposalDetailPanel({
             <div className="rounded-md bg-slate-50 p-3 text-sm text-slate-500">No evidence attached.</div>
           ) : (
             proposal.evidence_sources.map((evidence) => (
-              <EvidenceCard key={evidence.source_id} evidence={evidence} />
+              <EvidenceCard key={evidence.source_id} evidence={evidence} onOpenSource={onOpenSource} />
             ))
           )}
         </div>

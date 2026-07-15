@@ -1,4 +1,4 @@
-import { ExternalLink, Mail, NotebookText, PanelTop } from "lucide-react";
+import { Mail, NotebookText, PanelTop } from "lucide-react";
 import type { Evidence } from "../types";
 
 const sourceIcons = {
@@ -13,7 +13,13 @@ const sourceClasses = {
   email: "bg-emerald-50 text-emerald-700",
 };
 
-export function EvidenceCard({ evidence }: { evidence: Evidence }) {
+export function EvidenceCard({
+  evidence,
+  onOpenSource,
+}: {
+  evidence: Evidence;
+  onOpenSource?: (sourceId: string) => void;
+}) {
   const Icon = sourceIcons[evidence.source_type];
   return (
     <article className="rounded-md border border-slate-200 bg-white p-3">
@@ -35,9 +41,14 @@ export function EvidenceCard({ evidence }: { evidence: Evidence }) {
             {evidence.author_or_owner ?? "unknown"} · {new Date(evidence.timestamp).toLocaleDateString()}
           </p>
         </div>
-        <a href={evidence.fake_url} className="text-slate-400 hover:text-slate-700" title={evidence.fake_url}>
-          <ExternalLink className="h-4 w-4" />
-        </a>
+        {onOpenSource && (
+          <button
+            onClick={() => onOpenSource(evidence.source_id)}
+            className="rounded-md border border-line bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+          >
+            Open
+          </button>
+        )}
       </div>
       <p className="mt-3 text-sm text-slate-600">{evidence.excerpt}</p>
       {evidence.matched_terms.length > 0 && (

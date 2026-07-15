@@ -32,6 +32,31 @@ export interface Evidence {
   matched_terms: string[];
 }
 
+export interface SourceDocument {
+  source_id: string;
+  source_type: SourceType;
+  title_or_subject: string;
+  author_or_owner?: string | null;
+  timestamp: string;
+  fake_url?: string | null;
+  source_priority: "high" | "medium" | "low";
+  document_status: "approved" | "deprecated" | "draft" | "n/a";
+  tags: string[];
+  labels: string[];
+  body: string;
+  excerpt: string;
+  matched_terms?: string[];
+  related_pack_names: string[];
+  title?: string;
+  owner_team?: string;
+  updated_at?: string;
+  subject?: string;
+  from?: string;
+  to?: string[];
+  cc?: string[];
+  sent_at?: string;
+}
+
 export interface ProposedUpdate {
   proposal_id: string;
   pack_id: string;

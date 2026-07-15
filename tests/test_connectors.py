@@ -1,6 +1,8 @@
 from app.config import get_settings
 from app.connectors.router import search_all_sources, source_stats
 from app.llm import detect_source_conflict
+from app.main import app
+from fastapi.testclient import TestClient
 
 
 def test_source_stats_are_mock_only() -> None:
@@ -22,3 +24,14 @@ def test_source_conflict_detection_for_youthmax() -> None:
     evidence = search_all_sources("YouthMax 10GB price", settings=get_settings(), top_k=6)
 
     assert detect_source_conflict(evidence)
+
+
+def test_source_document_endpoints_return_full_bodies() -> None:
+    client = TestClient(app)
+    sources = client.get("/sources").json()
+
+    assert len(sources) == 25
+    assert sources[0]["body"]
+    detail = client.get(f"/sources/{sources[0]['source_id']}").json()
+    assert detail["source_id"] == sources[0]["source_id"]
+    assert "related_pack_names" in detail

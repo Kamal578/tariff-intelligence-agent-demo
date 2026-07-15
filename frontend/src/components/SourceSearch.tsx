@@ -11,7 +11,7 @@ const examples = [
   "activation code Night Owl",
 ];
 
-export function SourceSearch() {
+export function SourceSearch({ onOpenSource }: { onOpenSource?: (sourceId: string) => void }) {
   const [query, setQuery] = useState("YouthMax 10GB price");
   const [results, setResults] = useState<Evidence[]>([]);
   const [loading, setLoading] = useState(false);
@@ -74,7 +74,7 @@ export function SourceSearch() {
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
           {results.map((result) => (
-            <EvidenceCard key={result.source_id} evidence={result} />
+            <EvidenceCard key={result.source_id} evidence={result} onOpenSource={onOpenSource} />
           ))}
         </div>
       )}
