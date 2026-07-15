@@ -36,22 +36,35 @@ def build_audit_log(
     decisions: list[ReviewDecision],
 ) -> list[dict[str, Any]]:
     proposal_lookup = {(item.pack_id, item.field_name): item for item in proposals}
+    proposal_id_lookup = {item.proposal_id: item for item in proposals}
     rows: list[dict[str, Any]] = []
     for decision in decisions:
-        proposal = proposal_lookup.get((decision.pack_id, decision.field_name))
+        proposal = (
+            proposal_id_lookup.get(decision.proposal_id)
+            if decision.proposal_id
+            else proposal_lookup.get((decision.pack_id, decision.field_name))
+        )
         rows.append(
             {
                 "timestamp": decision.decided_at.isoformat(),
+                "proposal_id": proposal.proposal_id if proposal else decision.proposal_id,
                 "pack_id": decision.pack_id,
+                "pack_name": proposal.pack_name if proposal else None,
                 "field_name": decision.field_name,
                 "old_value": proposal.old_value if proposal else None,
                 "proposed_value": proposal.proposed_value if proposal else None,
+                "issue_type": proposal.issue_type if proposal else None,
                 "decision": decision.decision,
                 "reviewer": decision.reviewer,
                 "review_reasoning": decision.reasoning,
                 "confidence_score": proposal.confidence_score if proposal else None,
                 "risk_level": proposal.risk_level if proposal else None,
-                "evidence_sources": proposal.evidence_sources if proposal else [],
+                "source_conflict_detected": proposal.source_conflict_detected if proposal else None,
+                "evidence_sources": [
+                    item.model_dump(mode="json") for item in proposal.evidence_sources
+                ]
+                if proposal
+                else [],
                 "agent_reasoning": proposal.reasoning_summary if proposal else "",
             }
         )
@@ -86,13 +99,13 @@ def generate_markdown_report(
         "",
         "## Decisions",
         "",
-        "| Pack ID | Field | Old Value | Proposed Value | Decision | Risk | Confidence |",
-        "| --- | --- | --- | --- | --- | --- | --- |",
+        "| Pack ID | Pack | Field | Issue | Old Value | Proposed Value | Decision | Risk | Confidence |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for row in audit_log:
         lines.append(
-            "| {pack_id} | {field_name} | {old_value} | {proposed_value} | {decision} | "
-            "{risk_level} | {confidence_score} |".format(**row)
+            "| {pack_id} | {pack_name} | {field_name} | {issue_type} | {old_value} | "
+            "{proposed_value} | {decision} | {risk_level} | {confidence_score} |".format(**row)
         )
     lines.extend(
         [
@@ -118,9 +131,14 @@ def _approved_proposals(
     proposals: list[ProposedUpdate],
     decisions: list[ReviewDecision],
 ) -> list[ProposedUpdate]:
+    approved_ids = {decision.proposal_id for decision in decisions if decision.decision == "approved"}
     approved_keys = {
         (decision.pack_id, decision.field_name)
         for decision in decisions
         if decision.decision == "approved"
     }
-    return [item for item in proposals if (item.pack_id, item.field_name) in approved_keys]
+    return [
+        item
+        for item in proposals
+        if item.proposal_id in approved_ids or (item.pack_id, item.field_name) in approved_keys
+    ]

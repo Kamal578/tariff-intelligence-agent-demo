@@ -47,7 +47,7 @@ class Settings(BaseSettings):
 
     @property
     def report_path(self) -> Path:
-        return self.output_dir / "review_report.md"
+        return self.output_dir / "report.md"
 
     @property
     def updated_excel_path(self) -> Path:

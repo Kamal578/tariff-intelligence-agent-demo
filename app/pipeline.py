@@ -7,7 +7,7 @@ from typing import Any
 from app.agent import generate_proposals
 from app.config import Settings, get_settings
 from app.excel_io import load_tariff_records
-from app.schemas import ProcessingResult, ProposedUpdate, TariffRecord
+from app.schemas import MissingFieldIssue, ProcessingResult, ProposedUpdate, TariffRecord
 from app.tools import detect_record_issues
 from app.connectors.router import source_stats
 
@@ -62,3 +62,8 @@ def load_records_state(settings: Settings | None = None) -> list[TariffRecord]:
 def load_proposals_state(settings: Settings | None = None) -> list[ProposedUpdate]:
     settings = settings or get_settings()
     return [ProposedUpdate.model_validate(item) for item in read_json(settings.proposals_state_path, [])]
+
+
+def load_issues_state(settings: Settings | None = None) -> list[MissingFieldIssue]:
+    settings = settings or get_settings()
+    return [MissingFieldIssue.model_validate(item) for item in read_json(settings.issues_state_path, [])]

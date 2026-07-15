@@ -103,6 +103,7 @@ class ProposedUpdate(BaseModel):
 
 
 class ReviewDecision(BaseModel):
+    proposal_id: str | None = None
     pack_id: str
     field_name: str
     decision: DecisionValue

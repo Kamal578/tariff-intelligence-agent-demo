@@ -40,9 +40,14 @@ def deduplicate_proposals(proposals: list[ProposedUpdate]) -> list[ProposedUpdat
     for proposal in proposals:
         key = (proposal.pack_id, proposal.field_name)
         existing = best.get(key)
-        if existing is None or proposal.confidence_score > existing.confidence_score:
+        if existing is None or _proposal_rank(proposal) > _proposal_rank(existing):
             best[key] = proposal
     return sorted(best.values(), key=lambda item: (item.pack_id, item.field_name))
+
+
+def _proposal_rank(proposal: ProposedUpdate) -> tuple[int, float]:
+    risk_rank = {"low": 1, "medium": 2, "high": 3}[proposal.risk_level]
+    return risk_rank, proposal.confidence_score
 
 
 def _summarize_mode(modes: list[str]) -> str:
