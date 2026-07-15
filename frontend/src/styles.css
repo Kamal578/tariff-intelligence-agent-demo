@@ -93,6 +93,12 @@ button:disabled {
   animation: analysis-progress 1.45s ease-in-out infinite;
 }
 
+.analysis-determinate {
+  min-width: 0.65rem;
+  transition: width 360ms ease;
+  box-shadow: 0 0 18px rgba(37, 99, 235, 0.28);
+}
+
 .analysis-step {
   animation: analysis-step 1.45s ease-in-out infinite;
 }
@@ -126,11 +132,13 @@ button:disabled {
 @media (prefers-reduced-motion: reduce) {
   .analysis-card,
   .analysis-progress,
+  .analysis-determinate,
   .analysis-step,
   .analysis-mini-bar,
   .analysis-skeleton,
   .analysis-orbit,
   .analysis-stage-scan::after {
     animation: none;
+    transition: none;
   }
 }

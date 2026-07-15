@@ -8,8 +8,12 @@ const stages = [
   ["Preparing review", ShieldCheck],
 ] as const;
 
-export function AnalysisOverlay({ visible }: { visible: boolean }) {
+export function AnalysisOverlay({ visible, progress }: { visible: boolean; progress: number }) {
   if (!visible) return null;
+
+  const clampedProgress = Math.max(0, Math.min(100, Math.round(progress)));
+  const activeStageIndex = Math.min(stages.length - 1, Math.floor((clampedProgress / 100) * stages.length));
+  const activeStage = stages[activeStageIndex][0];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 px-4 backdrop-blur-sm">
@@ -29,17 +33,39 @@ export function AnalysisOverlay({ visible }: { visible: boolean }) {
         </div>
 
         <div className="mt-6 overflow-hidden rounded-lg border border-line bg-slate-50">
-          <div className="analysis-progress h-2 bg-blue-600" />
+          <div className="border-b border-slate-200 bg-white p-4">
+            <div className="flex items-center justify-between gap-4 text-sm">
+              <span className="font-semibold text-slate-700">{activeStage}</span>
+              <span className="tabular-nums font-semibold text-blue-700">{clampedProgress}%</span>
+            </div>
+            <div className="mt-3 h-3 overflow-hidden rounded-full bg-blue-50">
+              <div className="analysis-determinate h-full rounded-full bg-blue-600" style={{ width: `${clampedProgress}%` }} />
+            </div>
+          </div>
           <div className="grid gap-3 p-4 md:grid-cols-5">
-            {stages.map(([label, Icon], index) => (
-              <div key={label} className="analysis-step rounded-md border border-slate-200 bg-white p-3" style={{ animationDelay: `${index * 160}ms` }}>
-                <Icon className="h-5 w-5 text-blue-600" />
+            {stages.map(([label, Icon], index) => {
+              const complete = index < activeStageIndex || clampedProgress === 100;
+              const active = index === activeStageIndex && clampedProgress < 100;
+
+              return (
+              <div
+                key={label}
+                className={`analysis-step rounded-md border bg-white p-3 ${
+                  active ? "border-blue-300 ring-2 ring-blue-100" : complete ? "border-emerald-200" : "border-slate-200"
+                }`}
+                style={{ animationDelay: `${index * 160}ms` }}
+              >
+                <Icon className={`h-5 w-5 ${complete ? "text-emerald-600" : "text-blue-600"}`} />
                 <div className="mt-3 text-sm font-semibold">{label}</div>
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                  <div className="analysis-mini-bar h-full rounded-full bg-blue-500" style={{ animationDelay: `${index * 180}ms` }} />
+                  <div
+                    className={`h-full rounded-full ${active ? "analysis-mini-bar bg-blue-500" : complete ? "bg-emerald-500" : "bg-slate-200"}`}
+                    style={{ animationDelay: `${index * 180}ms`, width: complete ? "100%" : active ? undefined : "24%" }}
+                  />
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

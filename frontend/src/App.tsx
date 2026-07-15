@@ -38,6 +38,7 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
   const [analysisRunning, setAnalysisRunning] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
   const [message, setMessage] = useState<string | undefined>();
 
   const selectedProposal = useMemo(
@@ -69,20 +70,39 @@ export default function App() {
       .catch(() => setBackendStatus("offline"));
   }, []);
 
+  useEffect(() => {
+    if (!analysisRunning) return undefined;
+
+    setAnalysisProgress((current) => Math.max(current, 8));
+    const timer = window.setInterval(() => {
+      setAnalysisProgress((current) => {
+        if (current >= 94) return current;
+        const remaining = 94 - current;
+        return Math.min(94, current + Math.max(2, Math.round(remaining * 0.18)));
+      });
+    }, 420);
+
+    return () => window.clearInterval(timer);
+  }, [analysisRunning]);
+
   async function runAnalysis() {
     setBusy(true);
     setAnalysisRunning(true);
+    setAnalysisProgress(4);
     setMessage(undefined);
     try {
       const result = await api.runAnalysis();
+      setAnalysisProgress(100);
       setSummary(result);
       setMessage(`Generated ${result.proposals} proposals from ${result.issues} issues.`);
+      await new Promise((resolve) => window.setTimeout(resolve, 300));
       await refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Run analysis failed.");
     } finally {
       setBusy(false);
       setAnalysisRunning(false);
+      window.setTimeout(() => setAnalysisProgress(0), 400);
     }
   }
 
@@ -134,7 +154,7 @@ export default function App() {
   return (
     <div>
       <Header backendStatus={backendStatus} mode={summary?.mode} apiBaseUrl={api.baseUrl} />
-      <AnalysisOverlay visible={analysisRunning} />
+      <AnalysisOverlay visible={analysisRunning} progress={analysisProgress} />
       <main className="mx-auto max-w-7xl space-y-5 px-6 py-6">
         <div className="flex flex-wrap gap-3">
           <button
@@ -160,6 +180,17 @@ export default function App() {
           </button>
           {message && <span className="rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-700">{message}</span>}
         </div>
+        {analysisRunning && (
+          <div className="rounded-lg border border-blue-100 bg-white p-3 shadow-soft">
+            <div className="mb-2 flex items-center justify-between text-sm">
+              <span className="font-semibold text-slate-700">Analysis progress</span>
+              <span className="tabular-nums font-semibold text-blue-700">{Math.round(analysisProgress)}%</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-blue-50">
+              <div className="analysis-determinate h-full rounded-full bg-blue-600" style={{ width: `${analysisProgress}%` }} />
+            </div>
+          </div>
+        )}
         <WorkflowStepper activeIndex={analysisRunning ? 4 : proposals.length ? 4 : records.length ? 2 : 0} running={analysisRunning} />
         <MetricsCards metrics={metrics} />
         <nav className="flex flex-wrap gap-2 rounded-lg border border-line bg-white p-2 shadow-soft">
