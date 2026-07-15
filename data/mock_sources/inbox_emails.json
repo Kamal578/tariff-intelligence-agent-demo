@@ -1,0 +1,135 @@
+[
+  {
+    "source_id": "MAIL-001",
+    "source_type": "email",
+    "thread_id": "thr-youthmax-june",
+    "from": "product.ops@demo.local",
+    "to": [
+      "tariff-analytics@demo.local"
+    ],
+    "subject": "Final YouthMax 10GB June pricing",
+    "sent_at": "2026-06-13T09:10:00Z",
+    "labels": [
+      "product-update",
+      "approved"
+    ],
+    "fake_url": "https://mail.demo.local/thread/thr-youthmax-june",
+    "body": "Final confirmation: YouthMax 10GB price is 12.90 AZN from 2026-06-01. Use activation code *123*10# and 30 day validity."
+  },
+  {
+    "source_id": "MAIL-002",
+    "source_type": "email",
+    "thread_id": "thr-youthmax-draft",
+    "from": "marketing@demo.local",
+    "to": [
+      "tariff-analytics@demo.local"
+    ],
+    "subject": "Draft YouthMax 10GB launch price",
+    "sent_at": "2026-04-08T17:20:00Z",
+    "labels": [
+      "draft"
+    ],
+    "fake_url": "https://mail.demo.local/thread/thr-youthmax-draft",
+    "body": "Draft campaign value for YouthMax 10GB was 11.90 AZN. Product Ops will confirm final price later."
+  },
+  {
+    "source_id": "MAIL-003",
+    "source_type": "email",
+    "thread_id": "thr-business-rename",
+    "from": "business.products@demo.local",
+    "to": [
+      "tariff-analytics@demo.local"
+    ],
+    "subject": "Business Pro 25GB rename to Business Pro Plus",
+    "sent_at": "2026-06-21T10:05:00Z",
+    "labels": [
+      "product-update",
+      "rename"
+    ],
+    "fake_url": "https://mail.demo.local/thread/thr-business-rename",
+    "body": "Please update reports: Business Pro 25GB is renamed to Business Pro Plus. Keep activation code *234*25# and data allowance 25 GB."
+  },
+  {
+    "source_id": "MAIL-004",
+    "source_type": "email",
+    "thread_id": "thr-night-owl-code-old",
+    "from": "prepaid.ops@demo.local",
+    "to": [
+      "tariff-analytics@demo.local"
+    ],
+    "subject": "Old Night Owl 5GB activation code",
+    "sent_at": "2026-05-02T12:15:00Z",
+    "labels": [
+      "obsolete"
+    ],
+    "fake_url": "https://mail.demo.local/thread/thr-night-owl-code-old",
+    "body": "Earlier Night Owl 5GB activation code was *123*50#. This was before final shortcode allocation."
+  },
+  {
+    "source_id": "MAIL-005",
+    "source_type": "email",
+    "thread_id": "thr-night-owl-code-final",
+    "from": "prepaid.ops@demo.local",
+    "to": [
+      "tariff-analytics@demo.local"
+    ],
+    "subject": "Final Night Owl 5GB activation code",
+    "sent_at": "2026-06-19T12:15:00Z",
+    "labels": [
+      "product-update",
+      "approved"
+    ],
+    "fake_url": "https://mail.demo.local/thread/thr-night-owl-code-final",
+    "body": "Final shortcode allocation for Night Owl 5GB is *123*55#. Please replace missing or old activation codes."
+  },
+  {
+    "source_id": "MAIL-006",
+    "source_type": "email",
+    "thread_id": "thr-student-discontinue",
+    "from": "lifecycle@demo.local",
+    "to": [
+      "tariff-analytics@demo.local"
+    ],
+    "subject": "Student Social 3GB discontinued",
+    "sent_at": "2026-06-23T16:00:00Z",
+    "labels": [
+      "lifecycle",
+      "approved"
+    ],
+    "fake_url": "https://mail.demo.local/thread/thr-student-discontinue",
+    "body": "Student Social 3GB is discontinued. Any active rows after 2026-06-30 should be proposed as inactive with high review visibility."
+  },
+  {
+    "source_id": "MAIL-007",
+    "source_type": "email",
+    "thread_id": "thr-roaming-lite-minutes-old",
+    "from": "roaming@demo.local",
+    "to": [
+      "tariff-analytics@demo.local"
+    ],
+    "subject": "Roaming Lite 1GB draft minutes",
+    "sent_at": "2026-05-20T09:40:00Z",
+    "labels": [
+      "draft"
+    ],
+    "fake_url": "https://mail.demo.local/thread/thr-roaming-lite-minutes-old",
+    "body": "Draft Roaming Lite 1GB configuration listed 10 minutes. Final catalog is pending."
+  },
+  {
+    "source_id": "MAIL-008",
+    "source_type": "email",
+    "thread_id": "thr-roaming-lite-minutes-final",
+    "from": "roaming@demo.local",
+    "to": [
+      "tariff-analytics@demo.local"
+    ],
+    "subject": "Roaming Lite 1GB final bundle",
+    "sent_at": "2026-06-28T10:30:00Z",
+    "labels": [
+      "product-update",
+      "approved"
+    ],
+    "fake_url": "https://mail.demo.local/thread/thr-roaming-lite-minutes-final",
+    "body": "Confirmed active Roaming Lite 1GB values: 7.50 AZN, 7 days, 1 GB, 20 minutes, 10 SMS, activation code *123*77#."
+  }
+]

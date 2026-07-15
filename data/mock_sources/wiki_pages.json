@@ -1,0 +1,94 @@
+[
+  {
+    "source_id": "WIKI-001",
+    "source_type": "wiki",
+    "title": "Tariff Price and Validity Rules",
+    "owner_team": "Revenue Assurance",
+    "tags": [
+      "rules",
+      "pricing",
+      "validity"
+    ],
+    "updated_at": "2026-06-15T08:00:00Z",
+    "fake_url": "https://wiki.demo.local/WIKI-001",
+    "body": "Allowed validity values are 1, 3, 7, 14, 30 and 90 days. Local pack prices normally range from 1.00 AZN to 80.00 AZN. Roaming packs may range from 5.00 AZN to 120.00 AZN."
+  },
+  {
+    "source_id": "WIKI-002",
+    "source_type": "wiki",
+    "title": "Activation Code Format Standard",
+    "owner_team": "Sales Operations",
+    "tags": [
+      "activation",
+      "format"
+    ],
+    "updated_at": "2026-06-10T09:30:00Z",
+    "fake_url": "https://wiki.demo.local/WIKI-002",
+    "body": "Activation codes must start with *, end with #, and contain digits and optional * separators. Missing activation codes require evidence from an approved product catalog or recent product email."
+  },
+  {
+    "source_id": "WIKI-003",
+    "source_type": "wiki",
+    "title": "Human Review Policy",
+    "owner_team": "Revenue Assurance",
+    "tags": [
+      "review",
+      "governance"
+    ],
+    "updated_at": "2026-06-18T15:45:00Z",
+    "fake_url": "https://wiki.demo.local/WIKI-003",
+    "body": "No Excel update may be applied until an analyst approves the specific proposal. Status changes, discontinued packs and replacement pack renames are medium or high risk and require explicit approval."
+  },
+  {
+    "source_id": "WIKI-004",
+    "source_type": "wiki",
+    "title": "Family Pack Migration Notes",
+    "owner_team": "Consumer Products",
+    "tags": [
+      "family",
+      "migration"
+    ],
+    "updated_at": "2026-05-14T10:20:00Z",
+    "fake_url": "https://wiki.demo.local/WIKI-004",
+    "body": "Older note: Family Data 18GB was active with activation code *456*18#. This note was written before the Family Share 20GB replacement decision."
+  },
+  {
+    "source_id": "WIKI-005",
+    "source_type": "wiki",
+    "title": "Student Segment Notes",
+    "owner_team": "Youth Products",
+    "tags": [
+      "student",
+      "lifecycle"
+    ],
+    "updated_at": "2026-04-18T13:40:00Z",
+    "fake_url": "https://wiki.demo.local/WIKI-005",
+    "body": "Old operating note: Student Social 3GB is active at 5.90 AZN for 14 days with activation code *321*3#. This note may be stale after lifecycle review."
+  },
+  {
+    "source_id": "WIKI-006",
+    "source_type": "wiki",
+    "title": "Social Mix and Data Boost Rules",
+    "owner_team": "Prepaid Data",
+    "tags": [
+      "social",
+      "data"
+    ],
+    "updated_at": "2026-06-26T08:50:00Z",
+    "fake_url": "https://wiki.demo.local/WIKI-006",
+    "body": "Social Mix 4GB approved validity is 14 days, price 6.90 AZN, activation code *222*4#. Data Boost 2GB is active at 2.90 AZN, validity 3 days, activation code *222*2#."
+  },
+  {
+    "source_id": "WIKI-007",
+    "source_type": "wiki",
+    "title": "Roaming Pack Risk Notes",
+    "owner_team": "Roaming Team",
+    "tags": [
+      "roaming",
+      "risk"
+    ],
+    "updated_at": "2026-06-27T12:00:00Z",
+    "fake_url": "https://wiki.demo.local/WIKI-007",
+    "body": "Roaming Max 5GB price should be 39.90 AZN, validity 14 days, data 5 GB, minutes 60, SMS 20, activation code *909*5#. Missing roaming prices are high review priority."
+  }
+]

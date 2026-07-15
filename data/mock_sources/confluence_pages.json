@@ -1,0 +1,122 @@
+[
+  {
+    "source_id": "CONF-001",
+    "source_type": "confluence",
+    "title": "YouthMax 10GB Approved Commercial Card",
+    "space": "Tariff Intelligence Demo",
+    "owner_team": "Youth Products",
+    "document_status": "approved",
+    "source_priority": "high",
+    "updated_at": "2026-06-12T09:00:00Z",
+    "fake_url": "https://confluence.demo.local/pages/CONF-001",
+    "body": "Approved values for YouthMax 10GB: price 12.90 AZN, validity 30 days, data 10 GB, minutes 300, SMS 100, activation code *123*10#, effective from 2026-06-01. Older launch price 11.90 AZN is no longer valid."
+  },
+  {
+    "source_id": "CONF-002",
+    "source_type": "confluence",
+    "title": "YouthMax 10GB Launch Draft",
+    "space": "Tariff Intelligence Demo",
+    "owner_team": "Youth Products",
+    "document_status": "deprecated",
+    "source_priority": "low",
+    "updated_at": "2026-04-05T12:00:00Z",
+    "fake_url": "https://confluence.demo.local/pages/CONF-002",
+    "body": "Deprecated launch draft for YouthMax 10GB listed price 11.90 AZN and activation code *123*09#. Do not use for reporting after 2026-06-01."
+  },
+  {
+    "source_id": "CONF-003",
+    "source_type": "confluence",
+    "title": "Business Pro Plus Product Catalog",
+    "space": "Tariff Intelligence Demo",
+    "owner_team": "Business Products",
+    "document_status": "approved",
+    "source_priority": "high",
+    "updated_at": "2026-06-20T10:30:00Z",
+    "fake_url": "https://confluence.demo.local/pages/CONF-003",
+    "body": "Business Pro 25GB was renamed to Business Pro Plus. Approved reporting name is Business Pro Plus. Price 29.90 AZN, validity 30 days, data 25 GB, minutes 800, SMS 200, activation code *234*25#, status active."
+  },
+  {
+    "source_id": "CONF-004",
+    "source_type": "confluence",
+    "title": "Business Pro 25GB Retired Catalog Entry",
+    "space": "Tariff Intelligence Demo",
+    "owner_team": "Business Products",
+    "document_status": "deprecated",
+    "source_priority": "medium",
+    "updated_at": "2026-03-11T08:15:00Z",
+    "fake_url": "https://confluence.demo.local/pages/CONF-004",
+    "body": "Business Pro 25GB was active before the June catalog refresh. This old page should not override the Business Pro Plus approved catalog."
+  },
+  {
+    "source_id": "CONF-005",
+    "source_type": "confluence",
+    "title": "Night Owl 5GB Approved Pack Sheet",
+    "space": "Tariff Intelligence Demo",
+    "owner_team": "Prepaid Data",
+    "document_status": "approved",
+    "source_priority": "high",
+    "updated_at": "2026-06-18T13:00:00Z",
+    "fake_url": "https://confluence.demo.local/pages/CONF-005",
+    "body": "Night Owl 5GB approved activation code is *123*55#. Price 4.90 AZN, validity 7 days, data 5 GB, tariff Prepaid, status active. Older code *123*50# was replaced."
+  },
+  {
+    "source_id": "CONF-006",
+    "source_type": "confluence",
+    "title": "Student Social 3GB Lifecycle Decision",
+    "space": "Tariff Intelligence Demo",
+    "owner_team": "Lifecycle Management",
+    "document_status": "approved",
+    "source_priority": "high",
+    "updated_at": "2026-06-22T16:45:00Z",
+    "fake_url": "https://confluence.demo.local/pages/CONF-006",
+    "body": "Student Social 3GB is discontinued effective 2026-06-30. Status should be inactive for reports after discontinuation. Previous active wiki notes are stale."
+  },
+  {
+    "source_id": "CONF-007",
+    "source_type": "confluence",
+    "title": "Family Share 20GB Replacement Catalog",
+    "space": "Tariff Intelligence Demo",
+    "owner_team": "Consumer Products",
+    "document_status": "approved",
+    "source_priority": "high",
+    "updated_at": "2026-06-24T11:00:00Z",
+    "fake_url": "https://confluence.demo.local/pages/CONF-007",
+    "body": "Family Data 18GB was replaced by Family Share 20GB. Use Family Share 20GB, price 24.90 AZN, validity 30 days, data 20 GB, minutes 500, SMS 200, activation code *456*20#."
+  },
+  {
+    "source_id": "CONF-008",
+    "source_type": "confluence",
+    "title": "Roaming Lite 1GB Approved Roaming Sheet",
+    "space": "Tariff Intelligence Demo",
+    "owner_team": "Roaming Team",
+    "document_status": "approved",
+    "source_priority": "high",
+    "updated_at": "2026-06-28T09:20:00Z",
+    "fake_url": "https://confluence.demo.local/pages/CONF-008",
+    "body": "Roaming Lite 1GB approved values: price 7.50 AZN, validity 7 days, data 1 GB, minutes 20, SMS 10, activation code *123*77#. Some inbox notes mention 10 minutes but those are obsolete."
+  },
+  {
+    "source_id": "CONF-009",
+    "source_type": "confluence",
+    "title": "Enterprise Data 50GB Product Card",
+    "space": "Tariff Intelligence Demo",
+    "owner_team": "Enterprise Products",
+    "document_status": "approved",
+    "source_priority": "high",
+    "updated_at": "2026-06-19T10:00:00Z",
+    "fake_url": "https://confluence.demo.local/pages/CONF-009",
+    "body": "Enterprise Data 50GB is active for Enterprise tariff. Price 49.90 AZN, validity 30 days, data 50 GB, minutes 0, SMS 0, activation code *909*50#, effective 2026-06-01."
+  },
+  {
+    "source_id": "CONF-010",
+    "source_type": "confluence",
+    "title": "SME Connect and Executive Voice Catalog",
+    "space": "Tariff Intelligence Demo",
+    "owner_team": "Business Products",
+    "document_status": "approved",
+    "source_priority": "high",
+    "updated_at": "2026-06-21T14:35:00Z",
+    "fake_url": "https://confluence.demo.local/pages/CONF-010",
+    "body": "SME Connect 15GB: price 18.90 AZN, validity 30 days, activation code *345*15#, effective 2026-06-05. Executive Voice 1000: price 19.90 AZN, validity 30 days, minutes 1000, SMS 100, activation code *700*1000#, active."
+  }
+]

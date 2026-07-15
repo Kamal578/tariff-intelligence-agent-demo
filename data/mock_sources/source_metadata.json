@@ -1,0 +1,11 @@
+{
+  "description": "Synthetic local-only enterprise sources for Tariff Intelligence Agent demo.",
+  "source_counts": {
+    "confluence": 10,
+    "wiki": 7,
+    "email": 8
+  },
+  "generated_for": "technical interview demo",
+  "real_connectors_used": false,
+  "notes": "fake_url values are intentionally non-routable demo URLs. No real Confluence, Gmail, IMAP, or Atlassian API is used."
+}
