@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse
 
 from app.config import get_settings
-from app.connectors.router import search_all_sources, source_stats
+from app.connectors.router import get_source_document, load_source_documents, search_all_sources, source_stats
 from app.pipeline import (
     ingest_knowledge,
     load_issues_state,
@@ -129,6 +129,19 @@ def download_report_md() -> FileResponse:
 @app.get("/sources/search")
 def source_search(q: str = Query(..., min_length=2)) -> list[dict[str, object]]:
     return [item.model_dump(mode="json") for item in search_all_sources(q, settings=get_settings())]
+
+
+@app.get("/sources")
+def sources() -> list[dict[str, object]]:
+    return load_source_documents(get_settings())
+
+
+@app.get("/sources/{source_id}")
+def source_detail(source_id: str) -> dict[str, object]:
+    document = get_source_document(source_id, get_settings())
+    if document is None:
+        raise HTTPException(status_code=404, detail=f"Source {source_id} not found")
+    return document
 
 
 @app.get("/sources/stats")
