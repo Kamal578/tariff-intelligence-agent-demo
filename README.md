@@ -59,6 +59,41 @@ Mock sources are used because this is an interview-safe synthetic demo. Real con
 
 ## Run Locally
 
+Docker Compose:
+
+```bash
+# Optional: configure Gemini for the backend container
+cp .env.docker.example .env.docker
+# edit .env.docker and set GEMINI_API_KEY if desired
+
+docker compose up --build
+```
+
+Open:
+
+```text
+Backend:  http://127.0.0.1:8000
+Frontend: http://127.0.0.1:5173
+```
+
+The Compose stack runs:
+
+- `backend`: FastAPI/Uvicorn on port `8000`.
+- `frontend`: built React app served by Nginx on port `5173`.
+
+Generated artifacts are mounted to the host at `data/output/`, so downloaded Excel, audit JSON, and report files remain inspectable after the containers stop.
+
+Useful Docker commands:
+
+```bash
+docker compose ps
+docker compose logs -f backend
+docker compose logs -f frontend
+docker compose down
+```
+
+Local Python/Node workflow:
+
 Backend:
 
 ```bash
@@ -161,6 +196,8 @@ If `GEMINI_API_KEY` is missing or the model response is invalid, deterministic f
 ```bash
 python -m pytest
 cd frontend && npm run build
+docker compose config
+docker compose up --build
 ```
 
 Current tests cover issue detection, mock connector search, evidence ranking, source conflict detection, proposal validation, review decisions, and approved-only Excel updates.
