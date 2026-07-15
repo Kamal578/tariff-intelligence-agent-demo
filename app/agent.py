@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 from app.config import Settings
+from app.connectors.router import search_all_sources
 from app.llm import GeminiProvider
 from app.schemas import MissingFieldIssue, ProposedUpdate, TariffRecord
-from app.vectorstore import retrieve_evidence
 
 
 def build_issue_query(record: TariffRecord, issue: MissingFieldIssue) -> str:
     return (
         f"{record.pack_name} {record.tariff_name or ''} {issue.field_name} "
-        f"{issue.issue_type} latest approved value tariff pack policy"
+        f"{issue.issue_type} latest approved value tariff pack policy rename discontinued activation price"
     )
 
 
@@ -27,7 +27,7 @@ def generate_proposals(
         record = records_by_id.get(issue.pack_id)
         if not record:
             continue
-        evidence = retrieve_evidence(build_issue_query(record, issue), settings.chroma_dir, k=4)
+        evidence = search_all_sources(build_issue_query(record, issue), settings=settings, top_k=6)
         proposal, mode = provider.propose_update(record, issue, evidence)
         proposals.append(proposal)
         modes.append(mode)

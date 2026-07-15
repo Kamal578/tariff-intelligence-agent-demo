@@ -25,10 +25,17 @@ VALIDITY_DAYS = {1, 3, 7, 14, 30, 90}
 ACTIVATION_CODE_PATTERN = re.compile(r"^\*[0-9*]+#$")
 REFERENCE_DATE = date(2026, 7, 14)
 KNOWN_EXPECTED_VALUES: dict[str, dict[str, Any]] = {
-    "youthmax 10gb": {"activation_code": "*123*10#"},
-    "business pro 25gb": {"pack_name": "Business Pro Plus", "data_gb": 25},
-    "data boost 15gb": {"data_gb": 15},
-    "mega stream 50gb": {"price_azn": 49.90, "minutes": 0},
+    "youthmax 10gb": {"price_azn": 12.90, "activation_code": "*123*10#"},
+    "business pro 25gb": {"pack_name": "Business Pro Plus"},
+    "night owl 5gb": {"activation_code": "*123*55#"},
+    "roaming lite 1gb": {"minutes": 20},
+    "student social 3gb": {"status": "inactive"},
+    "family data 18gb": {"pack_name": "Family Share 20GB", "status": "inactive"},
+    "enterprise data 50gb": {"activation_code": "*909*50#", "minutes": 0},
+    "sme connect 15gb": {"effective_date": "2026-06-05", "activation_code": "*345*15#"},
+    "roaming max 5gb": {"price_azn": 39.90},
+    "social mix 4gb": {"validity_days": 14},
+    "data boost 2gb": {"status": "active"},
 }
 
 
@@ -69,7 +76,7 @@ def detect_missing_fields(record: TariffRecord) -> list[MissingFieldIssue]:
                     pack_id=record.pack_id,
                     pack_name=record.pack_name,
                     field_name=field_name,
-                    issue_type="missing_field",
+                    issue_type=_missing_issue_type(field_name),
                     current_value=None,
                     description=f"{field_name} is required for reporting but is missing.",
                     risk_level="low" if field_name in {"activation_code", "validity_days"} else "medium",
@@ -88,7 +95,7 @@ def detect_duplicate_pack_names(records: list[TariffRecord]) -> list[MissingFiel
                     pack_id=record.pack_id,
                     pack_name=record.pack_name,
                     field_name="pack_name",
-                    issue_type="duplicate_pack_name",
+                    issue_type="duplicate_pack",
                     current_value=record.pack_name,
                     description="Pack name appears more than once in the workbook.",
                     risk_level="medium",
@@ -107,7 +114,7 @@ def detect_record_issues(records: list[TariffRecord]) -> list[MissingFieldIssue]
                     pack_id=record.pack_id,
                     pack_name=record.pack_name,
                     field_name="activation_code",
-                    issue_type="invalid_activation_code",
+                    issue_type="invalid_activation_code_format",
                     current_value=record.activation_code,
                     description="Activation code does not match the expected *digits*# format.",
                     risk_level="low",
@@ -119,7 +126,7 @@ def detect_record_issues(records: list[TariffRecord]) -> list[MissingFieldIssue]
                     pack_id=record.pack_id,
                     pack_name=record.pack_name,
                     field_name="last_updated",
-                    issue_type="outdated_record",
+                    issue_type="stale_effective_date",
                     current_value=record.last_updated.isoformat(),
                     description="Record has not been refreshed within the 120-day policy window.",
                     risk_level="medium",
@@ -156,7 +163,7 @@ def _price_issues(record: TariffRecord) -> list[MissingFieldIssue]:
                 pack_id=record.pack_id,
                 pack_name=record.pack_name,
                 field_name="price_azn",
-                issue_type="price_anomaly",
+                issue_type="suspicious_price",
                 current_value=record.price_azn,
                 description=f"Price is outside expected range {low:.2f}-{high:.2f} AZN.",
                 risk_level="high" if is_roaming else "medium",
@@ -197,7 +204,7 @@ def _status_issues(record: TariffRecord) -> list[MissingFieldIssue]:
                 pack_id=record.pack_id,
                 pack_name=record.pack_name,
                 field_name="status",
-                issue_type="status_conflict",
+                issue_type="discontinued_pack_active",
                 current_value=record.status,
                 description="Weekend Unlimited is expected to be inactive after 2026-05-31.",
                 risk_level="high",
@@ -209,7 +216,7 @@ def _status_issues(record: TariffRecord) -> list[MissingFieldIssue]:
                 pack_id=record.pack_id,
                 pack_name=record.pack_name,
                 field_name="status",
-                issue_type="status_conflict",
+                issue_type="conflicting_status",
                 current_value=record.status,
                 description="Promo Flash 2GB is expected to remain active through 2026-07-31.",
                 risk_level="high",
@@ -225,12 +232,13 @@ def _known_value_issues(record: TariffRecord) -> list[MissingFieldIssue]:
     for field_name, expected_value in expected.items():
         current = values.get(field_name)
         if current != expected_value:
+            issue_type = _known_value_issue_type(field_name, record, expected_value)
             issues.append(
                 MissingFieldIssue(
                     pack_id=record.pack_id,
                     pack_name=record.pack_name,
                     field_name=field_name,
-                    issue_type="value_mismatch",
+                    issue_type=issue_type,
                     current_value=current,
                     description=(
                         f"{field_name} differs from the latest synthetic commercial reference "
@@ -240,6 +248,28 @@ def _known_value_issues(record: TariffRecord) -> list[MissingFieldIssue]:
                 )
             )
     return issues
+
+
+def _missing_issue_type(field_name: str) -> str:
+    return {
+        "price_azn": "missing_price",
+        "validity_days": "missing_validity",
+        "activation_code": "missing_activation_code",
+        "status": "missing_status",
+        "effective_date": "stale_effective_date",
+    }.get(field_name, "value_mismatch")
+
+
+def _known_value_issue_type(field_name: str, record: TariffRecord, expected_value: Any) -> str:
+    if field_name == "price_azn":
+        return "outdated_price"
+    if field_name == "pack_name":
+        return "possible_rename"
+    if field_name == "status" and expected_value == "inactive" and normalize_name(record.status) == "active":
+        return "discontinued_pack_active"
+    if field_name == "status":
+        return "conflicting_status"
+    return "value_mismatch"
 
 
 def newest_evidence_date(dates: list[date | None]) -> date | None:

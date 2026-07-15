@@ -10,6 +10,22 @@ ProposalStatus = Literal["proposed", "approved", "rejected", "needs_review"]
 RiskLevel = Literal["low", "medium", "high"]
 DecisionValue = Literal["approved", "rejected"]
 SourceType = Literal["confluence", "wiki", "email"]
+IssueType = Literal[
+    "missing_price",
+    "missing_validity",
+    "missing_activation_code",
+    "invalid_activation_code_format",
+    "outdated_price",
+    "possible_rename",
+    "discontinued_pack_active",
+    "duplicate_pack",
+    "suspicious_price",
+    "stale_effective_date",
+    "conflicting_status",
+    "missing_status",
+    "tariff_mismatch",
+    "value_mismatch",
+]
 
 
 class TariffRecord(BaseModel):
@@ -39,16 +55,7 @@ class MissingFieldIssue(BaseModel):
     pack_id: str
     pack_name: str
     field_name: str
-    issue_type: Literal[
-        "missing_field",
-        "invalid_activation_code",
-        "outdated_record",
-        "duplicate_pack_name",
-        "price_anomaly",
-        "tariff_mismatch",
-        "status_conflict",
-        "value_mismatch",
-    ]
+    issue_type: IssueType
     current_value: Any = None
     description: str
     risk_level: RiskLevel = "medium"
@@ -76,15 +83,22 @@ class RetrievedEvidence(BaseModel):
 
 
 class ProposedUpdate(BaseModel):
+    proposal_id: str
     pack_id: str
+    pack_name: str
     field_name: str
     old_value: Any = None
     proposed_value: Any
+    issue_type: IssueType
     confidence_score: float = Field(ge=0, le=1)
-    status: ProposalStatus = "proposed"
-    evidence_sources: list[str] = Field(default_factory=list)
-    reasoning_summary: str
     risk_level: RiskLevel = "medium"
+    status: ProposalStatus = "proposed"
+    evidence_sources: list[Evidence] = Field(default_factory=list)
+    reasoning_summary: str
+    source_conflict_detected: bool = False
+    source_freshness_summary: str = ""
+    decision_basis: str = ""
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     requires_human_review: bool = True
 
 

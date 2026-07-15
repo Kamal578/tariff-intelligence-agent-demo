@@ -34,6 +34,10 @@ class Settings(BaseSettings):
         return self.output_dir / "proposals.json"
 
     @property
+    def issues_state_path(self) -> Path:
+        return self.output_dir / "issues.json"
+
+    @property
     def review_state_path(self) -> Path:
         return self.output_dir / "review_decisions.json"
 

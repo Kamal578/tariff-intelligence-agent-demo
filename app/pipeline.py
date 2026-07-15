@@ -9,7 +9,7 @@ from app.config import Settings, get_settings
 from app.excel_io import load_tariff_records
 from app.schemas import ProcessingResult, ProposedUpdate, TariffRecord
 from app.tools import detect_record_issues
-from app.vectorstore import build_vectorstore
+from app.connectors.router import source_stats
 
 
 def write_json(path: Path, payload: Any) -> Path:
@@ -26,14 +26,11 @@ def read_json(path: Path, default: Any) -> Any:
 
 def ingest_knowledge(settings: Settings | None = None) -> dict[str, Any]:
     settings = settings or get_settings()
-    count = build_vectorstore(settings.knowledge_base_dir, settings.chroma_dir)
-    return {"indexed_chunks": count, "chroma_dir": str(settings.chroma_dir)}
+    return source_stats(settings)
 
 
 def process_tariffs(settings: Settings | None = None) -> ProcessingResult:
     settings = settings or get_settings()
-    if not settings.chroma_dir.exists():
-        ingest_knowledge(settings)
     records = load_tariff_records(settings.input_excel_path)
     issues = detect_record_issues(records)
     proposals, mode = generate_proposals(records, issues, settings)
@@ -50,6 +47,10 @@ def persist_processing_result(result: ProcessingResult, settings: Settings) -> N
     write_json(
         settings.proposals_state_path,
         [proposal.model_dump(mode="json") for proposal in result.proposals],
+    )
+    write_json(
+        settings.issues_state_path,
+        [issue.model_dump(mode="json") for issue in result.issues],
     )
 
 

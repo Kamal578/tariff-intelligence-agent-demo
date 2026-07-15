@@ -12,7 +12,6 @@ from app.schemas import Evidence
 
 
 TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
-PACK_PATTERN = re.compile(r"([a-z]+(?:\\s+[a-z]+)*\\s+\\d+(?:gb|mb)?)", re.IGNORECASE)
 
 
 class BaseMockConnector(ABC):
@@ -52,9 +51,10 @@ class BaseMockConnector(ABC):
     def _score(self, query: str, item: dict[str, Any], matched_terms: list[str]) -> float:
         query_terms = tokenize(query)
         overlap = len(matched_terms) / max(len(set(query_terms)), 1)
-        score = overlap
-        if _pack_phrase(query) and _pack_phrase(query).lower() in self._search_text(item).lower():
-            score += 0.35
+        score = overlap * 0.45
+        pack_phrase = _pack_phrase(query)
+        if pack_phrase and pack_phrase.lower() in self._search_text(item).lower():
+            score += 0.55
         score += freshness_boost(parse_timestamp(item.get("updated_at") or item.get("sent_at")))
         score += priority_boost(item.get("source_priority"))
         score += status_boost(item.get("document_status"))
@@ -102,5 +102,9 @@ def status_boost(status: str | None) -> float:
 
 
 def _pack_phrase(query: str) -> str:
-    match = PACK_PATTERN.search(query)
-    return match.group(1) if match else ""
+    raw_tokens = re.findall(r"[a-zA-Z0-9]+", query)
+    for index, token in enumerate(raw_tokens):
+        if re.fullmatch(r"\d+(?:gb|mb)", token, flags=re.IGNORECASE):
+            start = max(index - 3, 0)
+            return " ".join(raw_tokens[start : index + 1])
+    return ""
