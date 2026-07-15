@@ -1,10 +1,11 @@
-import { AlertTriangle, CheckCircle2, Clock3, Loader2 } from "lucide-react";
+import { AlertTriangle, Ban, CheckCircle2, Clock3, Loader2 } from "lucide-react";
 import type { AnalysisJob } from "../types";
 
 function statusIcon(status: AnalysisJob["status"]) {
   if (status === "completed") return <CheckCircle2 className="h-4 w-4 text-emerald-600" />;
   if (status === "failed") return <AlertTriangle className="h-4 w-4 text-red-600" />;
-  if (status === "running") return <Loader2 className="h-4 w-4 animate-spin text-blue-600" />;
+  if (status === "cancelled") return <Ban className="h-4 w-4 text-slate-500" />;
+  if (status === "running" || status === "cancelling") return <Loader2 className="h-4 w-4 animate-spin text-blue-600" />;
   return <Clock3 className="h-4 w-4 text-slate-500" />;
 }
 

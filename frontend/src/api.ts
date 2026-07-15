@@ -42,6 +42,8 @@ export const api = {
     }),
   getAnalysisJob: (jobId: string) => request<AnalysisJob>(`/analysis-jobs/${encodeURIComponent(jobId)}`),
   getAnalysisJobs: () => request<AnalysisJob[]>("/analysis-jobs"),
+  cancelAnalysisJob: (jobId: string) =>
+    request<AnalysisJob>(`/analysis-jobs/${encodeURIComponent(jobId)}/cancel`, { method: "POST" }),
   getRecords: () => request<TariffRecord[]>("/records"),
   getProposals: () => request<ProposedUpdate[]>("/proposals"),
   getMetrics: () => request<Metrics>("/metrics"),

@@ -9,6 +9,7 @@ from app.llm import GeminiProvider, fallback_update
 from app.schemas import AnalysisMode, MissingFieldIssue, ProcessingMode, ProposedUpdate, TariffRecord
 
 ProgressCallback = Callable[[str, int], None]
+CancelCheck = Callable[[], bool]
 
 
 def build_issue_query(record: TariffRecord, issue: MissingFieldIssue) -> str:
@@ -24,6 +25,7 @@ def generate_proposals(
     settings: Settings,
     generation_mode: AnalysisMode = "preview",
     progress_callback: ProgressCallback | None = None,
+    cancel_check: CancelCheck | None = None,
 ) -> tuple[list[ProposedUpdate], ProcessingMode]:
     provider = GeminiProvider(settings) if generation_mode == "gemini" else None
     records_by_id = {record.pack_id: record for record in records}
@@ -32,6 +34,7 @@ def generate_proposals(
     total_issues = max(len(issues), 1)
 
     for index, issue in enumerate(issues, start=1):
+        _raise_if_cancelled(cancel_check)
         record = records_by_id.get(issue.pack_id)
         if not record:
             continue
@@ -42,6 +45,7 @@ def generate_proposals(
             progress,
         )
         _pause_for_visible_progress(settings, progress_callback)
+        _raise_if_cancelled(cancel_check)
         evidence = search_all_sources(build_issue_query(record, issue), settings=settings, top_k=6)
         _emit(
             progress_callback,
@@ -49,6 +53,7 @@ def generate_proposals(
             min(84, progress + 1),
         )
         _pause_for_visible_progress(settings, progress_callback)
+        _raise_if_cancelled(cancel_check)
         if provider is None:
             proposal = fallback_update(record, issue, evidence)
             mode = "preview"
@@ -58,6 +63,7 @@ def generate_proposals(
         modes.append(mode)
 
     _emit(progress_callback, "Deduplicating and ranking proposals", 84)
+    _raise_if_cancelled(cancel_check)
     return deduplicate_proposals(proposals), _summarize_mode(modes)
 
 
@@ -69,6 +75,13 @@ def _emit(callback: ProgressCallback | None, stage: str, progress: int) -> None:
 def _pause_for_visible_progress(settings: Settings, callback: ProgressCallback | None) -> None:
     if callback and settings.analysis_progress_delay_ms > 0:
         time.sleep(settings.analysis_progress_delay_ms / 1000)
+
+
+def _raise_if_cancelled(cancel_check: CancelCheck | None) -> None:
+    if cancel_check and cancel_check():
+        from app.cancellation import AnalysisCancelled
+
+        raise AnalysisCancelled("Analysis run was cancelled before the next proposal step.")
 
 
 def deduplicate_proposals(proposals: list[ProposedUpdate]) -> list[ProposedUpdate]:

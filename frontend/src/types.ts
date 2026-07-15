@@ -78,7 +78,7 @@ export interface ProposedUpdate {
 }
 
 export type AnalysisMode = "preview" | "gemini";
-export type AnalysisJobStatus = "queued" | "running" | "completed" | "failed";
+export type AnalysisJobStatus = "queued" | "running" | "cancelling" | "cancelled" | "completed" | "failed";
 
 export interface Metrics {
   records: number;

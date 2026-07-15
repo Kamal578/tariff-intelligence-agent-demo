@@ -107,6 +107,12 @@ export default function App() {
         setAnalysisRunning(false);
         await refresh();
       }
+      if (job.status === "cancelled") {
+        setMessage(`Run ${job.job_id} cancelled before additional proposal steps.`);
+        setBusy(false);
+        setAnalysisRunning(false);
+        await refresh();
+      }
     };
 
     void poll();
@@ -146,6 +152,16 @@ export default function App() {
       setMessage("Demo state reset.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function cancelRun(job: AnalysisJob) {
+    try {
+      const cancelled = await api.cancelAnalysisJob(job.job_id);
+      setJobs((current) => [cancelled, ...current.filter((item) => item.job_id !== cancelled.job_id)]);
+      setMessage(`Cancellation requested for ${job.job_id}.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Cancel request failed.");
     }
   }
 
@@ -226,7 +242,7 @@ export default function App() {
           </button>
           {message && <span className="status-toast rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-700">{message}</span>}
         </div>
-        <ActiveRunPanel job={activeJob} />
+        <ActiveRunPanel job={activeJob} onCancel={cancelRun} />
         {analysisRunning && (
           <div className="rounded-lg border border-blue-100 bg-white p-3 shadow-soft">
             <div className="mb-2 flex items-center justify-between text-sm">

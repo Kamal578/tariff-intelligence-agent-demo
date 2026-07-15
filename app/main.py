@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse, PlainTextResponse
 
 from app.config import get_settings
 from app.connectors.router import get_source_document, load_source_documents, search_all_sources, source_stats
-from app.jobs import create_analysis_job, get_analysis_job, list_analysis_jobs, run_analysis_job, summarize_processing_result
+from app.jobs import cancel_analysis_job, create_analysis_job, get_analysis_job, list_analysis_jobs, run_analysis_job, summarize_processing_result
 from app.pipeline import (
     ingest_knowledge,
     load_issues_state,
@@ -81,6 +81,14 @@ def analysis_jobs() -> list[dict[str, object]]:
 @app.get("/analysis-jobs/{job_id}")
 def analysis_job(job_id: str) -> dict[str, object]:
     job = get_analysis_job(job_id, get_settings())
+    if job is None:
+        raise HTTPException(status_code=404, detail=f"Analysis job {job_id} not found")
+    return job.model_dump(mode="json")
+
+
+@app.post("/analysis-jobs/{job_id}/cancel")
+def cancel_job(job_id: str) -> dict[str, object]:
+    job = cancel_analysis_job(job_id, get_settings())
     if job is None:
         raise HTTPException(status_code=404, detail=f"Analysis job {job_id} not found")
     return job.model_dump(mode="json")

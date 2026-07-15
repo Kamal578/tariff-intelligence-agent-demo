@@ -1,8 +1,9 @@
-import { Activity, Clock3, Loader2 } from "lucide-react";
+import { Activity, Clock3, Loader2, Square } from "lucide-react";
 import type { AnalysisJob } from "../types";
 
-export function ActiveRunPanel({ job }: { job?: AnalysisJob }) {
-  if (!job || !["queued", "running"].includes(job.status)) return null;
+export function ActiveRunPanel({ job, onCancel }: { job?: AnalysisJob; onCancel: (job: AnalysisJob) => void }) {
+  if (!job || !["queued", "running", "cancelling"].includes(job.status)) return null;
+  const cancelling = job.status === "cancelling";
 
   return (
     <section className="live-run-panel rounded-lg border border-blue-100 bg-white p-4 shadow-soft">
@@ -20,7 +21,7 @@ export function ActiveRunPanel({ job }: { job?: AnalysisJob }) {
             Requested {job.requested_mode} mode. Last backend update {formatTime(job.updated_at)}.
           </p>
         </div>
-        <div className="w-full shrink-0 md:w-72">
+        <div className="w-full shrink-0 space-y-3 md:w-80">
           <div className="mb-2 flex items-center justify-between text-sm">
             <span className="inline-flex items-center gap-2 font-semibold text-slate-700">
               <Activity className="h-4 w-4 text-blue-600" />
@@ -31,6 +32,15 @@ export function ActiveRunPanel({ job }: { job?: AnalysisJob }) {
           <div className="h-3 overflow-hidden rounded-full bg-blue-50">
             <div className="analysis-determinate h-full rounded-full bg-blue-600" style={{ width: `${job.progress}%` }} />
           </div>
+          <button
+            type="button"
+            disabled={cancelling}
+            onClick={() => onCancel(job)}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:bg-slate-100 disabled:text-slate-500"
+          >
+            {cancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
+            {cancelling ? "Cancelling..." : "Cancel Run"}
+          </button>
         </div>
       </div>
     </section>

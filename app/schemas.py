@@ -12,7 +12,7 @@ DecisionValue = Literal["approved", "rejected"]
 SourceType = Literal["confluence", "wiki", "email"]
 AnalysisMode = Literal["preview", "gemini"]
 ProcessingMode = Literal["preview", "gemini", "fallback", "mixed"]
-AnalysisJobStatus = Literal["queued", "running", "completed", "failed"]
+AnalysisJobStatus = Literal["queued", "running", "cancelling", "cancelled", "completed", "failed"]
 IssueType = Literal[
     "missing_price",
     "missing_validity",

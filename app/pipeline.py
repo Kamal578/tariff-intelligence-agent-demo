@@ -30,18 +30,23 @@ def ingest_knowledge(settings: Settings | None = None) -> dict[str, Any]:
 
 
 ProgressCallback = Callable[[str, int], None]
+CancelCheck = Callable[[], bool]
 
 
 def process_tariffs(
     settings: Settings | None = None,
     generation_mode: AnalysisMode = "preview",
     progress_callback: ProgressCallback | None = None,
+    cancel_check: CancelCheck | None = None,
 ) -> ProcessingResult:
     settings = settings or get_settings()
+    _raise_if_cancelled(cancel_check)
     _emit(progress_callback, "Loading Excel workbook", 15)
     records = load_tariff_records(settings.input_excel_path)
+    _raise_if_cancelled(cancel_check)
     _emit(progress_callback, "Running deterministic validation", 30)
     issues = detect_record_issues(records)
+    _raise_if_cancelled(cancel_check)
     _emit(progress_callback, "Retrieving source evidence", 50)
     proposals, mode = generate_proposals(
         records,
@@ -49,7 +54,9 @@ def process_tariffs(
         settings,
         generation_mode=generation_mode,
         progress_callback=progress_callback,
+        cancel_check=cancel_check,
     )
+    _raise_if_cancelled(cancel_check)
     _emit(progress_callback, "Persisting review queue", 86)
     result = ProcessingResult(records=records, issues=issues, proposals=proposals, mode=mode)
     persist_processing_result(result, settings)
@@ -60,6 +67,13 @@ def process_tariffs(
 def _emit(callback: ProgressCallback | None, stage: str, progress: int) -> None:
     if callback:
         callback(stage, progress)
+
+
+def _raise_if_cancelled(cancel_check: CancelCheck | None) -> None:
+    if cancel_check and cancel_check():
+        from app.cancellation import AnalysisCancelled
+
+        raise AnalysisCancelled("Analysis run was cancelled before the next pipeline stage.")
 
 
 def persist_processing_result(result: ProcessingResult, settings: Settings) -> None:

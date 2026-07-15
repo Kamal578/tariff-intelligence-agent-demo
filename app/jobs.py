@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from threading import Lock
 from uuid import uuid4
 
+from app.cancellation import AnalysisCancelled
 from app.config import Settings, get_settings
 from app.pipeline import process_tariffs, read_json, write_json
 from app.schemas import AnalysisJob, AnalysisMode, ProcessSummary, ProcessingResult
@@ -27,6 +28,8 @@ def run_analysis_job(job_id: str, settings: Settings | None = None) -> AnalysisJ
     job = get_analysis_job(job_id, settings)
     if job is None:
         raise ValueError(f"Analysis job {job_id} not found")
+    if job.status == "cancelling":
+        return _mark_cancelled(job, settings)
 
     job.status = "running"
     job.stage = "Starting analysis"
@@ -39,6 +42,7 @@ def run_analysis_job(job_id: str, settings: Settings | None = None) -> AnalysisJ
             settings,
             generation_mode=job.requested_mode,
             progress_callback=lambda stage, progress: _update_progress(job_id, stage, progress, settings),
+            cancel_check=lambda: _is_cancel_requested(job_id, settings),
         )
         job = get_analysis_job(job_id, settings) or job
         job.status = "completed"
@@ -46,6 +50,14 @@ def run_analysis_job(job_id: str, settings: Settings | None = None) -> AnalysisJ
         job.progress = 100
         job.actual_mode = result.mode
         job.summary = summarize_processing_result(result)
+        job.finished_at = datetime.now(UTC)
+        _upsert_job(job, settings)
+        return job
+    except AnalysisCancelled as exc:
+        job = get_analysis_job(job_id, settings) or job
+        job.status = "cancelled"
+        job.stage = "Cancelled"
+        job.error = str(exc)
         job.finished_at = datetime.now(UTC)
         _upsert_job(job, settings)
         return job
@@ -57,6 +69,19 @@ def run_analysis_job(job_id: str, settings: Settings | None = None) -> AnalysisJ
         job.finished_at = datetime.now(UTC)
         _upsert_job(job, settings)
         return job
+
+
+def cancel_analysis_job(job_id: str, settings: Settings | None = None) -> AnalysisJob | None:
+    settings = settings or get_settings()
+    job = get_analysis_job(job_id, settings)
+    if job is None:
+        return None
+    if job.status in {"completed", "failed", "cancelled"}:
+        return job
+    job.status = "cancelling"
+    job.stage = "Cancellation requested"
+    _upsert_job(job, settings)
+    return job
 
 
 def list_analysis_jobs(settings: Settings | None = None) -> list[AnalysisJob]:
@@ -88,9 +113,24 @@ def _update_progress(job_id: str, stage: str, progress: int, settings: Settings)
     job = get_analysis_job(job_id, settings)
     if job is None:
         return
+    if job.status in {"cancelling", "cancelled"}:
+        return
     job.stage = stage
     job.progress = progress
     _upsert_job(job, settings)
+
+
+def _is_cancel_requested(job_id: str, settings: Settings) -> bool:
+    job = get_analysis_job(job_id, settings)
+    return bool(job and job.status == "cancelling")
+
+
+def _mark_cancelled(job: AnalysisJob, settings: Settings) -> AnalysisJob:
+    job.status = "cancelled"
+    job.stage = "Cancelled"
+    job.finished_at = datetime.now(UTC)
+    _upsert_job(job, settings)
+    return job
 
 
 def _upsert_job(job: AnalysisJob, settings: Settings) -> None:

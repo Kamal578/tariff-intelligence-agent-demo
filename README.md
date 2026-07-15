@@ -152,6 +152,7 @@ streamlit run ui/streamlit_app.py
 - `POST /analysis-jobs`
 - `GET /analysis-jobs`
 - `GET /analysis-jobs/{job_id}`
+- `POST /analysis-jobs/{job_id}/cancel`
 - `GET /records`
 - `POST /process` with `{"mode": "preview"}` or `{"mode": "gemini"}`
 - `GET /proposals`
