@@ -18,3 +18,7 @@ data/chroma/
 .streamlit/
 .vscode/
 .idea/
+
+# Frontend dependencies/build output.
+frontend/node_modules/
+frontend/dist/
