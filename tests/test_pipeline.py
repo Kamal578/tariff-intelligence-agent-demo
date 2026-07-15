@@ -23,13 +23,14 @@ def test_pipeline_generates_fallback_proposals(tmp_path: Path) -> None:
     ingest_result = ingest_knowledge(settings)
     result = process_tariffs(settings)
 
-    assert ingest_result["indexed_chunks"] > 0
+    assert ingest_result["source_counts"] == {"confluence": 10, "wiki": 7, "email": 8}
     assert result.mode == "fallback"
-    assert len(result.records) == 15
+    assert len(result.records) == 28
     assert any(
         proposal.pack_id == "PK001"
         and proposal.field_name == "price_azn"
         and proposal.proposed_value == 12.9
+        and proposal.source_conflict_detected
         for proposal in result.proposals
     )
 

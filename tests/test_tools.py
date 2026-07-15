@@ -12,7 +12,7 @@ def test_detects_expected_sample_issues() -> None:
     issues = detect_record_issues(records)
     keys = {(issue.pack_id, issue.field_name, issue.issue_type) for issue in issues}
 
-    assert ("PK001", "price_azn", "missing_field") in keys
-    assert ("PK003", "activation_code", "invalid_activation_code") in keys
-    assert ("PK005", "status", "status_conflict") in keys
-    assert ("PK006", "data_gb", "value_mismatch") in keys
+    assert ("PK001", "price_azn", "outdated_price") in keys
+    assert ("PK003", "activation_code", "missing_activation_code") in keys
+    assert ("PK005", "status", "discontinued_pack_active") in keys
+    assert ("PK024", "price_azn", "suspicious_price") in keys
