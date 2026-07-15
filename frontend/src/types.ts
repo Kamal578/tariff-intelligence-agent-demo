@@ -1,5 +1,5 @@
 export type RiskLevel = "low" | "medium" | "high";
-export type ProposalStatus = "proposed" | "approved" | "rejected" | "needs_review";
+export type ProposalStatus = "new" | "proposed" | "needs_review" | "approved" | "rejected" | "applied" | "superseded";
 export type SourceType = "confluence" | "wiki" | "email";
 
 export interface TariffRecord {

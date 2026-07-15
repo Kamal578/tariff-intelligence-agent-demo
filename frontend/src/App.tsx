@@ -149,10 +149,10 @@ export default function App() {
     setActiveView("sources");
   }
 
-  async function review(proposal: ProposedUpdate, decision: "approved" | "rejected") {
+  async function review(proposal: ProposedUpdate, decision: "approved" | "rejected", reasoning?: string) {
     setBusy(true);
     try {
-      await api.reviewProposal(proposal, decision);
+      await api.reviewProposal(proposal, decision, reasoning);
       await refresh();
       setMessage(`${proposal.proposal_id} ${decision}.`);
     } finally {
@@ -253,8 +253,8 @@ export default function App() {
             <ProposalDetailPanel
               proposal={selectedProposal}
               busy={busy}
-              onApprove={(proposal) => review(proposal, "approved")}
-              onReject={(proposal) => review(proposal, "rejected")}
+              onApprove={(proposal, reasoning) => review(proposal, "approved", reasoning)}
+              onReject={(proposal, reasoning) => review(proposal, "rejected", reasoning)}
               onOpenSource={openSource}
             />
           </div>

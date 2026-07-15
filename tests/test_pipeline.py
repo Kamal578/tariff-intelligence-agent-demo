@@ -5,6 +5,7 @@ from openpyxl import load_workbook
 from app.config import Settings
 from app.jobs import create_analysis_job, list_analysis_jobs, run_analysis_job
 from app.pipeline import ingest_knowledge, process_tariffs
+from app.pipeline import load_proposals_state
 from app.reporting import apply_approved_updates, load_audit_log
 from app.review_store import save_review_decision
 from app.schemas import ReviewDecision
@@ -102,3 +103,9 @@ def test_apply_approved_updates_only_mutates_approved_fields(tmp_path: Path) -> 
     assert Path(result["audit_log"]).exists()
     assert Path(result["report"]).exists()
     assert {entry["decision"] for entry in load_audit_log(settings)} == {"approved", "rejected"}
+    applied = [
+        proposal
+        for proposal in load_proposals_state(settings)
+        if proposal.pack_id == "PK001" and proposal.field_name == "price_azn"
+    ]
+    assert applied[0].status == "applied"

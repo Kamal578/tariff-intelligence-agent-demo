@@ -22,6 +22,7 @@ def apply_approved_updates(settings: Settings | None = None) -> dict[str, Any]:
     output_path = write_tariff_dataframe(updated_df, settings.updated_excel_path)
     audit_log = build_audit_log(proposals, decisions)
     write_json(settings.audit_log_path, audit_log)
+    _mark_applied(proposals, approved, settings)
     report_path = generate_markdown_report(proposals, decisions, settings)
     return {
         "applied_updates": len(approved),
@@ -142,3 +143,15 @@ def _approved_proposals(
         for item in proposals
         if item.proposal_id in approved_ids or (item.pack_id, item.field_name) in approved_keys
     ]
+
+
+def _mark_applied(
+    proposals: list[ProposedUpdate],
+    applied: list[ProposedUpdate],
+    settings: Settings,
+) -> None:
+    applied_ids = {item.proposal_id for item in applied}
+    for proposal in proposals:
+        if proposal.proposal_id in applied_ids:
+            proposal.status = "applied"
+    write_json(settings.proposals_state_path, [item.model_dump(mode="json") for item in proposals])

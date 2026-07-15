@@ -202,7 +202,7 @@ Rules:
 - Propose exactly one update for the supplied issue.
 - Do not invent evidence. Use the supplied sources.
 - Set requires_human_review to true for every proposal.
-- Use status "proposed" unless evidence is weak, then use "needs_review".
+- Use status "new" unless evidence is weak, then use "needs_review".
 
 Record:
 {record.model_dump_json()}
@@ -240,7 +240,7 @@ def fallback_update(
         field_name, proposed_value = _fallback_field_and_value(record, issue, knowledge, evidence)
 
     confidence = _fallback_confidence(issue, proposed_value, evidence)
-    status = "proposed" if confidence >= 0.72 and issue.risk_level != "high" else "needs_review"
+    status = "new" if confidence >= 0.72 and issue.risk_level != "high" else "needs_review"
     conflict = detect_source_conflict(evidence)
     return ProposedUpdate(
         proposal_id=f"{record.pack_id}-{field_name}",

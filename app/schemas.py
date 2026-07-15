@@ -6,7 +6,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, field_validator
 
 
-ProposalStatus = Literal["proposed", "approved", "rejected", "needs_review"]
+ProposalStatus = Literal["new", "proposed", "needs_review", "approved", "rejected", "applied", "superseded"]
 RiskLevel = Literal["low", "medium", "high"]
 DecisionValue = Literal["approved", "rejected"]
 SourceType = Literal["confluence", "wiki", "email"]

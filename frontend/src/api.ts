@@ -45,7 +45,7 @@ export const api = {
   getRecords: () => request<TariffRecord[]>("/records"),
   getProposals: () => request<ProposedUpdate[]>("/proposals"),
   getMetrics: () => request<Metrics>("/metrics"),
-  reviewProposal: (proposal: ProposedUpdate, decision: "approved" | "rejected") =>
+  reviewProposal: (proposal: ProposedUpdate, decision: "approved" | "rejected", reasoning?: string) =>
     request("/review", {
       method: "POST",
       body: JSON.stringify({
@@ -54,7 +54,7 @@ export const api = {
         field_name: proposal.field_name,
         decision,
         reviewer: "react_demo",
-        reasoning: `${decision} in React dashboard`,
+        reasoning: reasoning?.trim() || `${decision} in React dashboard`,
       }),
     }),
   applyApproved: () => request<{ applied_updates: number; output_excel: string }>("/apply-approved", { method: "POST" }),
