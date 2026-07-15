@@ -1,4 +1,4 @@
-import type { AuditEntry, Evidence, Metrics, ProcessSummary, ProposedUpdate, SourceDocument, TariffRecord } from "./types";
+import type { AnalysisMode, AuditEntry, Evidence, Metrics, ProcessSummary, ProposedUpdate, SourceDocument, TariffRecord } from "./types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
@@ -18,7 +18,11 @@ export const api = {
   baseUrl: API_BASE_URL,
   health: () => request<{ status: string }>("/health"),
   resetDemo: () => request<{ reset: boolean; removed: string[] }>("/reset-demo", { method: "POST" }),
-  runAnalysis: () => request<ProcessSummary>("/process", { method: "POST" }),
+  runAnalysis: (mode: AnalysisMode) =>
+    request<ProcessSummary>("/process", {
+      method: "POST",
+      body: JSON.stringify({ mode }),
+    }),
   getRecords: () => request<TariffRecord[]>("/records"),
   getProposals: () => request<ProposedUpdate[]>("/proposals"),
   getMetrics: () => request<Metrics>("/metrics"),

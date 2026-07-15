@@ -29,7 +29,7 @@ flowchart LR
 
 1. Start the FastAPI backend.
 2. Start the React dashboard.
-3. Click **Run Analysis**.
+3. Select **Quick Preview** for deterministic local proposals or **Gemini** for live LLM proposals, then click **Run Analysis**.
 4. Review original Excel records, generated proposals, confidence, risk, and conflict badges.
 5. Open a proposal and inspect Confluence/wiki/email evidence cards.
 6. Use mock source search for queries like `YouthMax 10GB price` or `Student Social discontinued`.
@@ -136,7 +136,7 @@ streamlit run ui/streamlit_app.py
 
 - `GET /health`
 - `GET /records`
-- `POST /process`
+- `POST /process` with `{"mode": "preview"}` or `{"mode": "gemini"}`
 - `GET /proposals`
 - `GET /proposals/{proposal_id}`
 - `POST /review`
@@ -150,6 +150,15 @@ streamlit run ui/streamlit_app.py
 - `GET /sources/stats`
 - `POST /reset-demo`
 
+## Analysis Modes
+
+The React dashboard has two run modes:
+
+- **Quick Preview** sends `{"mode": "preview"}` and never calls Gemini. It uses deterministic local proposal generation with retrieved mock evidence.
+- **Gemini** sends `{"mode": "gemini"}` and attempts live Gemini proposal generation. If Gemini is unavailable, the backend falls back to deterministic proposals.
+
+The API response `mode` reports what actually happened: `preview`, `gemini`, `fallback`, or `mixed`.
+
 ## Gemini and Fallback Mode
 
 Gemini support uses `google-genai` and reads:
@@ -159,7 +168,7 @@ GEMINI_API_KEY=
 GEMINI_MODEL=gemini-2.5-flash
 ```
 
-If `GEMINI_API_KEY` is missing or the model response is invalid, deterministic fallback logic still generates valid `ProposedUpdate` objects using synthetic reference values and retrieved mock evidence. The full dashboard, approval flow, Excel output, audit log, and tests work offline.
+If `GEMINI_API_KEY` is missing or the model response is invalid while Gemini mode is selected, deterministic fallback logic still generates valid `ProposedUpdate` objects using synthetic reference values and retrieved mock evidence. The full dashboard, approval flow, Excel output, audit log, and tests work offline.
 
 ## Technical Decisions
 
@@ -205,7 +214,7 @@ Current tests cover issue detection, mock connector search, evidence ranking, so
 ## Three-Minute Demo Script
 
 1. Show `data/input/tariff_packs.xlsx` and point out rows with old prices, missing activation codes, discontinued packs, and duplicate names.
-2. Open the React dashboard and click **Run Analysis**.
+2. Open the React dashboard, keep **Quick Preview** selected for the fast offline path, and click **Run Analysis**.
 3. Show metrics: total records, issues, generated proposals, high-risk proposals, approved/rejected counts, and source conflicts.
 4. Open the YouthMax 10GB price proposal. Highlight old value `11.90`, proposed value `12.90`, conflict badge, and evidence cards showing old draft vs approved sources.
 5. Use source search for `Student Social discontinued` to show the agent is searching mock enterprise evidence rather than guessing.

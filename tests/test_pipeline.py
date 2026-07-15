@@ -18,13 +18,18 @@ def make_settings(tmp_path: Path) -> Settings:
     )
 
 
-def test_pipeline_generates_fallback_proposals(tmp_path: Path) -> None:
+def test_pipeline_generates_preview_proposals_without_llm(tmp_path: Path, monkeypatch) -> None:
     settings = make_settings(tmp_path)
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("Preview mode should not call Gemini")
+
+    monkeypatch.setattr("app.agent.GeminiProvider.propose_update", fail_if_called)
     ingest_result = ingest_knowledge(settings)
     result = process_tariffs(settings)
 
     assert ingest_result["source_counts"] == {"confluence": 10, "wiki": 7, "email": 8}
-    assert result.mode == "fallback"
+    assert result.mode == "preview"
     assert len(result.records) == 28
     assert any(
         proposal.pack_id == "PK001"
@@ -33,6 +38,14 @@ def test_pipeline_generates_fallback_proposals(tmp_path: Path) -> None:
         and proposal.source_conflict_detected
         for proposal in result.proposals
     )
+
+
+def test_gemini_mode_falls_back_without_api_key(tmp_path: Path) -> None:
+    settings = make_settings(tmp_path)
+    result = process_tariffs(settings, generation_mode="gemini")
+
+    assert result.mode == "fallback"
+    assert result.proposals
 
 
 def test_apply_approved_updates_only_mutates_approved_fields(tmp_path: Path) -> None:

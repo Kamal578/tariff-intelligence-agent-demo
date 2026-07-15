@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from app.config import Settings
 from app.connectors.router import search_all_sources
-from app.llm import GeminiProvider
-from app.schemas import MissingFieldIssue, ProposedUpdate, TariffRecord
+from app.llm import GeminiProvider, fallback_update
+from app.schemas import AnalysisMode, MissingFieldIssue, ProcessingMode, ProposedUpdate, TariffRecord
 
 
 def build_issue_query(record: TariffRecord, issue: MissingFieldIssue) -> str:
@@ -17,18 +17,23 @@ def generate_proposals(
     records: list[TariffRecord],
     issues: list[MissingFieldIssue],
     settings: Settings,
-) -> tuple[list[ProposedUpdate], str]:
-    provider = GeminiProvider(settings)
+    generation_mode: AnalysisMode = "preview",
+) -> tuple[list[ProposedUpdate], ProcessingMode]:
+    provider = GeminiProvider(settings) if generation_mode == "gemini" else None
     records_by_id = {record.pack_id: record for record in records}
     proposals: list[ProposedUpdate] = []
-    modes: list[str] = []
+    modes: list[ProcessingMode] = []
 
     for issue in issues:
         record = records_by_id.get(issue.pack_id)
         if not record:
             continue
         evidence = search_all_sources(build_issue_query(record, issue), settings=settings, top_k=6)
-        proposal, mode = provider.propose_update(record, issue, evidence)
+        if provider is None:
+            proposal = fallback_update(record, issue, evidence)
+            mode = "preview"
+        else:
+            proposal, mode = provider.propose_update(record, issue, evidence)
         proposals.append(proposal)
         modes.append(mode)
 
@@ -50,8 +55,10 @@ def _proposal_rank(proposal: ProposedUpdate) -> tuple[int, float]:
     return risk_rank, proposal.confidence_score
 
 
-def _summarize_mode(modes: list[str]) -> str:
+def _summarize_mode(modes: list[ProcessingMode]) -> ProcessingMode:
     unique_modes = set(modes)
+    if unique_modes == {"preview"}:
+        return "preview"
     if unique_modes == {"gemini"}:
         return "gemini"
     if unique_modes == {"fallback"} or not unique_modes:

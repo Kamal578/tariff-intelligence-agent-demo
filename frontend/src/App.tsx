@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { Archive, BookOpen, ClipboardList, Play, RefreshCw, RotateCcw } from "lucide-react";
+import { Archive, BookOpen, Bot, ClipboardList, Play, RefreshCw, RotateCcw, Zap } from "lucide-react";
 import { api } from "./api";
 import { Header } from "./components/Header";
 import { AnalysisOverlay } from "./components/AnalysisOverlay";
@@ -13,7 +13,7 @@ import { RecordsTable } from "./components/RecordsTable";
 import { SourceSearch } from "./components/SourceSearch";
 import { SourcesOfTruth } from "./components/SourcesOfTruth";
 import { WorkflowStepper } from "./components/WorkflowStepper";
-import type { AuditEntry, Metrics, ProcessSummary, ProposedUpdate, SourceDocument, TariffRecord } from "./types";
+import type { AnalysisMode, AuditEntry, Metrics, ProcessSummary, ProposedUpdate, SourceDocument, TariffRecord } from "./types";
 
 const emptyMetrics: Metrics = {
   records: 0,
@@ -36,6 +36,7 @@ export default function App() {
   const [sources, setSources] = useState<SourceDocument[]>([]);
   const [selectedSourceId, setSelectedSourceId] = useState<string | undefined>();
   const [selectedId, setSelectedId] = useState<string | undefined>();
+  const [analysisMode, setAnalysisMode] = useState<AnalysisMode>("preview");
   const [busy, setBusy] = useState(false);
   const [analysisRunning, setAnalysisRunning] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
@@ -91,10 +92,10 @@ export default function App() {
     setAnalysisProgress(4);
     setMessage(undefined);
     try {
-      const result = await api.runAnalysis();
+      const result = await api.runAnalysis(analysisMode);
       setAnalysisProgress(100);
       setSummary(result);
-      setMessage(`Generated ${result.proposals} proposals from ${result.issues} issues.`);
+      setMessage(`Generated ${result.proposals} proposals from ${result.issues} issues in ${result.mode} mode.`);
       await new Promise((resolve) => window.setTimeout(resolve, 300));
       await refresh();
     } catch (error) {
@@ -157,12 +158,29 @@ export default function App() {
       <AnalysisOverlay visible={analysisRunning} progress={analysisProgress} />
       <main className="mx-auto max-w-7xl space-y-5 px-6 py-6">
         <div className="flex flex-wrap gap-3">
+          <div className="inline-flex rounded-md border border-line bg-white p-1 shadow-soft">
+            <ModeButton
+              active={analysisMode === "preview"}
+              disabled={busy}
+              icon={<Zap className="h-4 w-4" />}
+              label="Quick Preview"
+              onClick={() => setAnalysisMode("preview")}
+            />
+            <ModeButton
+              active={analysisMode === "gemini"}
+              disabled={busy}
+              icon={<Bot className="h-4 w-4" />}
+              label="Gemini"
+              onClick={() => setAnalysisMode("gemini")}
+            />
+          </div>
           <button
             disabled={busy || backendStatus !== "online"}
             onClick={runAnalysis}
             className={`inline-flex items-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 ${analysisRunning ? "analysis-button-glow" : ""}`}
           >
-            <Play className={`h-4 w-4 ${analysisRunning ? "animate-pulse" : ""}`} /> {analysisRunning ? "Analyzing..." : "Run Analysis"}
+            <Play className={`h-4 w-4 ${analysisRunning ? "animate-pulse" : ""}`} />{" "}
+            {analysisRunning ? `Analyzing with ${analysisMode === "preview" ? "Preview" : "Gemini"}...` : "Run Analysis"}
           </button>
           <button
             disabled={busy || backendStatus !== "online"}
@@ -251,6 +269,34 @@ function ViewButton({
       onClick={onClick}
       className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold ${
         active ? "bg-ink text-white" : "text-slate-600 hover:bg-slate-100"
+      }`}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+function ModeButton({
+  active,
+  disabled,
+  icon,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  disabled: boolean;
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={`inline-flex items-center gap-2 rounded px-3 py-1.5 text-sm font-semibold transition ${
+        active ? "bg-ink text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"
       }`}
     >
       {icon}

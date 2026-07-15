@@ -7,7 +7,7 @@ from typing import Any
 from app.agent import generate_proposals
 from app.config import Settings, get_settings
 from app.excel_io import load_tariff_records
-from app.schemas import MissingFieldIssue, ProcessingResult, ProposedUpdate, TariffRecord
+from app.schemas import AnalysisMode, MissingFieldIssue, ProcessingResult, ProposedUpdate, TariffRecord
 from app.tools import detect_record_issues
 from app.connectors.router import source_stats
 
@@ -29,11 +29,11 @@ def ingest_knowledge(settings: Settings | None = None) -> dict[str, Any]:
     return source_stats(settings)
 
 
-def process_tariffs(settings: Settings | None = None) -> ProcessingResult:
+def process_tariffs(settings: Settings | None = None, generation_mode: AnalysisMode = "preview") -> ProcessingResult:
     settings = settings or get_settings()
     records = load_tariff_records(settings.input_excel_path)
     issues = detect_record_issues(records)
-    proposals, mode = generate_proposals(records, issues, settings)
+    proposals, mode = generate_proposals(records, issues, settings, generation_mode=generation_mode)
     result = ProcessingResult(records=records, issues=issues, proposals=proposals, mode=mode)
     persist_processing_result(result, settings)
     return result

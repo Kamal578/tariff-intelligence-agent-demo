@@ -17,7 +17,7 @@ from app.pipeline import (
 )
 from app.reporting import apply_approved_updates, generate_markdown_report, load_audit_log
 from app.review_store import load_review_decisions, save_review_decision
-from app.schemas import ReviewDecision
+from app.schemas import ProcessRequest, ReviewDecision
 
 
 app = FastAPI(title="Tariff Intelligence Agent Demo", version="0.1.0")
@@ -41,8 +41,9 @@ def ingest() -> dict[str, object]:
 
 
 @app.post("/process")
-def process() -> dict[str, object]:
-    result = process_tariffs(get_settings())
+def process(request: ProcessRequest | None = None) -> dict[str, object]:
+    request = request or ProcessRequest()
+    result = process_tariffs(get_settings(), generation_mode=request.mode)
     return {
         "records": len(result.records),
         "issues": len(result.issues),

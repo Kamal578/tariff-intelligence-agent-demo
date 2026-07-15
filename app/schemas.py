@@ -10,6 +10,8 @@ ProposalStatus = Literal["proposed", "approved", "rejected", "needs_review"]
 RiskLevel = Literal["low", "medium", "high"]
 DecisionValue = Literal["approved", "rejected"]
 SourceType = Literal["confluence", "wiki", "email"]
+AnalysisMode = Literal["preview", "gemini"]
+ProcessingMode = Literal["preview", "gemini", "fallback", "mixed"]
 IssueType = Literal[
     "missing_price",
     "missing_validity",
@@ -112,9 +114,13 @@ class ReviewDecision(BaseModel):
     decided_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
+class ProcessRequest(BaseModel):
+    mode: AnalysisMode = "preview"
+
+
 class ProcessingResult(BaseModel):
     records: list[TariffRecord]
     issues: list[MissingFieldIssue]
     proposals: list[ProposedUpdate]
-    mode: Literal["gemini", "fallback", "mixed"] = "fallback"
+    mode: ProcessingMode = "preview"
     generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

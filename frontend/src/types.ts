@@ -77,6 +77,8 @@ export interface ProposedUpdate {
   requires_human_review: boolean;
 }
 
+export type AnalysisMode = "preview" | "gemini";
+
 export interface Metrics {
   records: number;
   issues: number;
